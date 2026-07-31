@@ -92,14 +92,14 @@ MINI_PIPELINE_VERSION = "v1.0.0"
 
 def run_mini_agent(message: str) -> AgentResponse:
     normalized = " ".join(message.lower().split())
-    if any(keyword in normalized for keyword in ("reserve", "reservation", "book")):
+    if any(keyword in normalized for keyword in ("reserve", "reservation", "book", "예약")):
         intent = "reservation-help"
         confidence = 0.96
         answer = (
             "Choose a room, provide a timezone-aware start and end time, "
             "then confirm the reservation."
         )
-    elif any(keyword in normalized for keyword in ("room", "meeting", "capacity")):
+    elif any(keyword in normalized for keyword in ("room", "meeting", "capacity", "회의실", "화상회의")):
         intent = "room-search"
         confidence = 0.93
         answer = (
