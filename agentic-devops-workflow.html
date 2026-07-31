@@ -469,6 +469,97 @@
       font-size: 12px;
       white-space: nowrap;
     }
+    .hands-on-layout {
+      display: grid;
+      grid-template-columns: minmax(240px, 0.7fr) minmax(0, 1.3fr);
+      gap: 20px;
+      align-items: start;
+    }
+    .preflight {
+      position: sticky;
+      top: 84px;
+    }
+    .preflight h3, .test-track h3 { margin: 0 0 12px; }
+    .preflight-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .preflight-item {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 9px;
+      align-items: start;
+      color: var(--cp-text-muted);
+      font-size: 14px;
+    }
+    .preflight-item::before {
+      content: "✓";
+      color: var(--cp-success);
+      font-weight: 700;
+    }
+    .test-track {
+      display: grid;
+      gap: 12px;
+    }
+    .test-step {
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr);
+      gap: 16px;
+      padding: 20px;
+      border: 1px solid var(--cp-border);
+      border-radius: 16px;
+      background: var(--cp-surface);
+    }
+    .test-step-index {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--cp-accent);
+      border-radius: 0.625rem;
+      color: var(--cp-accent);
+      font-family: Consolas, "Courier New", Courier, monospace;
+      font-weight: 700;
+    }
+    .test-step h4 { margin: 0 0 6px; font-size: 18px; }
+    .test-step p { margin: 0; color: var(--cp-text-muted); }
+    .test-step ul { margin: 10px 0 0; padding-left: 20px; }
+    .test-step li + li { margin-top: 5px; }
+    .ui-path {
+      display: block;
+      margin-top: 10px;
+      color: var(--cp-text-soft);
+      font-family: Consolas, "Courier New", Courier, monospace;
+      font-size: 12px;
+    }
+    .command-block {
+      overflow-x: auto;
+      margin: 12px 0 0;
+      padding: 14px;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      background: var(--cp-bg-elevated);
+      color: var(--cp-text);
+      font-family: Consolas, "Courier New", Courier, monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      white-space: pre;
+    }
+    .step-result {
+      display: inline-block;
+      margin-top: 10px;
+      color: var(--cp-success);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .number-note {
+      margin-bottom: 20px;
+      padding: 14px 16px;
+      border-left: 4px solid var(--cp-warning);
+      background: var(--cp-surface-soft);
+      color: var(--cp-text-muted);
+    }
 
     .split {
       display: grid;
@@ -609,7 +700,8 @@
       .brand span:last-child, .nav { display: none; }
       .theme-toggle { margin-left: auto; }
       .hero { padding-top: 56px; }
-      .section-head, .split, .demo-grid { grid-template-columns: 1fr; }
+      .section-head, .split, .demo-grid, .hands-on-layout { grid-template-columns: 1fr; }
+      .preflight { position: static; }
       .flow, .status-strip { grid-template-columns: 1fr; }
       .workflow { grid-template-columns: 48px 1fr; gap: 12px; }
       .workflow-index { font-size: 20px; }
@@ -634,6 +726,7 @@
         <a href="#overview">전체 흐름</a>
         <a href="#sequence">시퀀스</a>
         <a href="#actions">Actions</a>
+        <a href="#hands-on">직접 테스트</a>
         <a href="#governance">승인</a>
         <a href="#demo">시연 순서</a>
       </nav>
@@ -888,11 +981,223 @@
       </div>
     </section>
 
+    <section id="hands-on">
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <span class="section-number">04 / HANDS-ON</span>
+            <h2>직접 테스트하는 방법</h2>
+          </div>
+          <p class="section-description">
+            현재 준비된 저장소에서 실제 Issue를 Copilot에 할당하고, Agent session·draft PR·검증·사람 승인·
+            ACA 배포까지 순서대로 확인합니다. 자동 merge는 사용하지 않습니다.
+          </p>
+        </div>
+        <div class="number-note">
+          <strong>번호 안내:</strong> 요청 흐름의 “05 병합 결과 재평가”는 workflow 정리 후
+          <strong>03 · Delivery — Evaluate, Approve, Deploy ACA</strong>로 변경되었습니다.
+          현재 기본 흐름은 00 → 01 → 02 → 03입니다.
+        </div>
+        <div class="hands-on-layout">
+          <aside class="card preflight">
+            <h3>시작 전 확인</h3>
+            <p>아래 조건이 충족돼야 전체 흐름을 재현할 수 있습니다.</p>
+            <div class="preflight-list">
+              <div class="preflight-item">GitHub에 <strong>hijigoo/dev-agent-workflow</strong> 저장소가 보인다.</div>
+              <div class="preflight-item">New issue에서 <strong>Cloud Agent task</strong>를 선택할 수 있다.</div>
+              <div class="preflight-item">Issue Assignee 목록에 <strong>Copilot</strong>이 표시된다.</div>
+              <div class="preflight-item">production Environment에 required reviewer가 설정돼 있다.</div>
+              <div class="preflight-item">Azure OIDC secrets와 resource group variables가 production에 있다.</div>
+              <div class="preflight-item"><span class="mono">ACA_DEPLOYMENT_ENABLED</span>의 현재 값이 false다.</div>
+            </div>
+            <div class="callout">
+              <strong>테스트 원칙</strong>
+              Issue·PR·Actions 실행은 실제 GitHub에서, 배포 확인은 external Web URL에서 수행합니다.
+            </div>
+            <a class="button" href="https://github.com/hijigoo/dev-agent-workflow/actions">Actions 열기</a>
+          </aside>
+
+          <div class="test-track">
+            <article class="test-step">
+              <span class="test-step-index">01</span>
+              <div>
+                <h4>Agent-ready Issue를 생성합니다</h4>
+                <p>Cloud Agent task 양식을 선택하고 한 Agent session 안에서 끝낼 수 있는 작은 과업을 작성합니다.</p>
+                <span class="ui-path">Repository → Issues → New issue → Cloud Agent task</span>
+                <pre class="command-block">제목: [Agent] 한국어 회의실 검색 intent 지원
+
+인수 조건:
+- 한국어 검색 요청을 room-search로 분류
+- 기존 영어 요청 동작 유지
+- API unit·React component·Playwright test 추가
+
+제외 범위:
+- 외부 LLM/API 도입
+- Azure·workflow 변경</pre>
+                <a class="button" href="https://github.com/hijigoo/dev-agent-workflow/issues/new/choose">New issue 열기</a>
+                <span class="step-result">기대 결과 · agent-ready label이 붙은 열린 Issue</span>
+              </div>
+            </article>
+
+            <article class="test-step">
+              <span class="test-step-index">02</span>
+              <div>
+                <h4>Issue를 Copilot에 할당합니다</h4>
+                <p>Issue 오른쪽 Assignees에서 Copilot을 선택합니다. 별도 수동 workflow 실행은 필요하지 않습니다.</p>
+                <span class="ui-path">Issue → Assignees → Copilot</span>
+                <ul>
+                  <li>GitHub가 <strong>Copilot cloud agent</strong> session을 시작합니다.</li>
+                  <li><strong>00 · Cloud Agent — Reproducible Setup</strong>으로 Python·Node 환경을 준비합니다.</li>
+                  <li>Issue timeline에서 session과 연결된 PR 링크를 확인합니다.</li>
+                </ul>
+                <span class="step-result">기대 결과 · copilot/* branch와 Running Copilot cloud agent 실행</span>
+              </div>
+            </article>
+
+            <article class="test-step">
+              <span class="test-step-index">03</span>
+              <div>
+                <h4>Cloud Agent의 draft PR을 확인합니다</h4>
+                <p>Agent가 조사·코드 변경·테스트를 완료하면 draft PR에 변경 범위와 검증 결과를 보고합니다.</p>
+                <span class="ui-path">Issue timeline → Connected pull request → Files changed</span>
+                <ul>
+                  <li>Issue 인수 조건과 실제 변경 파일이 일치하는지 확인합니다.</li>
+                  <li>제외 범위 밖 dependency·workflow 변경이 없는지 확인합니다.</li>
+                  <li>PR이 draft 상태인지 확인합니다.</li>
+                </ul>
+                <span class="step-result">기대 결과 · Agent 작성 commit, test, rollback 설명이 있는 draft PR</span>
+              </div>
+            </article>
+
+            <article class="test-step">
+              <span class="test-step-index">04</span>
+              <div>
+                <h4>01과 02 검증을 실행합니다</h4>
+                <p>Copilot이 만든 commit은 repository owner의 workflow 실행 승인이 필요할 수 있습니다.</p>
+                <span class="ui-path">Pull request → Checks → Approve and run workflows 또는 Re-run all jobs</span>
+                <ul>
+                  <li><strong>01:</strong> Python, React lint/unit/build, Playwright E2E, quality artifact</li>
+                  <li><strong>02:</strong> Python과 JavaScript/TypeScript CodeQL</li>
+                </ul>
+                <span class="step-result">기대 결과 · Python, Web, Browser E2E, CodeQL check 모두 Success</span>
+              </div>
+            </article>
+
+            <article class="test-step">
+              <span class="test-step-index">05</span>
+              <div>
+                <h4>사람이 리뷰하고 Agent에 수정 요청합니다</h4>
+                <p>기능 확인과 코드 승인을 분리합니다. 수정이 필요하면 새 Issue 대신 기존 PR에서 요청합니다.</p>
+                <pre class="command-block">@copilot 한국어 검색 테스트에 화상회의 장비 조건을 추가하고,
+기존 영어 room-search 테스트가 유지되는지 확인해 주세요.
+workflow와 Azure 설정은 변경하지 마세요.</pre>
+                <ul>
+                  <li>후속 commit이 올라오면 01·02 최신 결과를 다시 확인합니다.</li>
+                  <li>요청자와 다른 독립 reviewer가 승인합니다.</li>
+                  <li>모든 conversation이 해결된 뒤에만 merge합니다.</li>
+                </ul>
+                <span class="step-result">기대 결과 · 리뷰 전후 commit과 독립 승인 기록</span>
+              </div>
+            </article>
+
+            <article class="test-step">
+              <span class="test-step-index">06</span>
+              <div>
+                <h4>배포 flag를 켜고 PR을 병합합니다</h4>
+                <p>실제 ACA 배포를 재현할 때만 repository variable을 true로 변경한 뒤 PR을 merge합니다.</p>
+                <span class="ui-path">Settings → Secrets and variables → Actions → Variables → ACA_DEPLOYMENT_ENABLED=true</span>
+                <a class="button" href="https://github.com/hijigoo/dev-agent-workflow/settings/variables/actions">Actions variables 열기</a>
+                <ul>
+                  <li>PR checks와 독립 승인이 완료됐는지 먼저 확인합니다.</li>
+                  <li>Squash 또는 merge 정책에 맞게 main에 병합합니다.</li>
+                </ul>
+                <span class="step-result">기대 결과 · main push로 03 Delivery 자동 시작</span>
+              </div>
+            </article>
+
+            <article class="test-step">
+              <span class="test-step-index">07</span>
+              <div>
+                <h4>03의 병합 결과 재평가를 확인합니다</h4>
+                <p>PR 시점 결과를 재사용하지 않고 실제 main commit SHA에서 전체 검증을 다시 실행합니다.</p>
+                <span class="ui-path">Actions → 03 · Delivery → Post-merge evaluation</span>
+                <ul>
+                  <li>Python regression, Web lint/unit/build, Playwright E2E가 실행됩니다.</li>
+                  <li>privacy-safe quality scorecard와 evidence artifact가 생성됩니다.</li>
+                  <li>평가 실패 시 deploy job은 시작되지 않습니다.</li>
+                </ul>
+                <span class="step-result">기대 결과 · Post-merge evaluation Success</span>
+              </div>
+            </article>
+
+            <article class="test-step">
+              <span class="test-step-index">08</span>
+              <div>
+                <h4>production 배포를 승인합니다</h4>
+                <p>평가가 성공하면 deploy job이 production Environment에서 Waiting 상태가 됩니다.</p>
+                <span class="ui-path">03 Delivery run → Review deployments → production → Approve and deploy</span>
+                <ul>
+                  <li>승인 전에는 Azure OIDC login과 Bicep 배포가 실행되지 않습니다.</li>
+                  <li>Required reviewer가 평가 artifact와 대상 commit을 확인합니다.</li>
+                </ul>
+                <span class="step-result">기대 결과 · 승인 audit 후 Azure job 시작</span>
+              </div>
+            </article>
+
+            <article class="test-step">
+              <span class="test-step-index">09</span>
+              <div>
+                <h4>Azure ACA와 웹사이트를 확인합니다</h4>
+                <p>OIDC 로그인 후 ACR에서 commit SHA image를 만들고 세 Container App revision을 배포합니다.</p>
+                <pre class="command-block">WEB_URL="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io"
+curl --fail "$WEB_URL/health"
+curl --fail "$WEB_URL/api/health"
+curl --fail "$WEB_URL/api/agent/about"
+curl --fail "$WEB_URL/intake/health"</pre>
+                <a class="button primary" href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io">배포 사이트 열기</a>
+                <span class="step-result">기대 결과 · Web와 두 internal API의 HTTPS health 성공</span>
+              </div>
+            </article>
+
+            <article class="test-step">
+              <span class="test-step-index">10</span>
+              <div>
+                <h4>테스트 종료 후 안전 상태로 복구합니다</h4>
+                <p>불필요한 main push가 배포 승인 대기를 만들지 않도록 deployment flag를 false로 되돌립니다.</p>
+                <span class="ui-path">Actions variables → ACA_DEPLOYMENT_ENABLED=false</span>
+                <ul>
+                  <li>Issue·PR·Actions·Environment approval·ACA revision 링크를 시연 증적으로 보존합니다.</li>
+                  <li>테스트 데이터와 불필요한 임시 Issue는 팀 정책에 따라 정리합니다.</li>
+                </ul>
+                <span class="step-result">기대 결과 · 배포 사이트 유지, 후속 자동 배포 비활성화</span>
+              </div>
+            </article>
+
+            <article class="card">
+              <h3>로컬에서 먼저 검증하려면</h3>
+              <p>GitHub 실습 전 동일한 애플리케이션 검증 명령을 로컬에서 실행할 수 있습니다.</p>
+              <pre class="command-block">python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e 'apps/api[test]' -e 'apps/work-intake[test]'
+python -m pytest apps/api/tests apps/work-intake/tests tests
+
+cd apps/web
+npm ci
+npm run lint
+npm test
+npm run build
+npm run test:e2e</pre>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="governance">
       <div class="shell">
         <div class="section-head">
           <div>
-            <span class="section-number">04 / GOVERNANCE</span>
+            <span class="section-number">05 / GOVERNANCE</span>
             <h2>자동화와 승인 경계</h2>
           </div>
           <p class="section-description">
@@ -908,7 +1213,7 @@
               <li>전용 branch에서 코드와 회귀 테스트 작성</li>
               <li>draft PR, 변경 요약, 위험과 rollback 보고</li>
               <li>리뷰 feedback에 따른 후속 수정</li>
-              <li>release·security·quality signal의 정형 분석</li>
+              <li>security·quality signal의 정형 분석</li>
             </ul>
             <div class="callout">
               <strong>중요 원칙</strong>
@@ -942,7 +1247,7 @@
       <div class="shell">
         <div class="section-head">
           <div>
-            <span class="section-number">05 / CONTINUOUS WORK</span>
+            <span class="section-number">06 / CONTINUOUS WORK</span>
             <h2>신규 기능 외 자동 과업</h2>
           </div>
           <p class="section-description">
@@ -971,7 +1276,7 @@
       <div class="shell">
         <div class="section-head">
           <div>
-            <span class="section-number">06 / CUSTOMER DEMO</span>
+            <span class="section-number">07 / CUSTOMER DEMO</span>
             <h2>45분 시연 진행안</h2>
           </div>
           <p class="section-description">
