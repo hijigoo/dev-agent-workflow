@@ -1,8 +1,6 @@
-name: "03 · Upgrade Demo — Mini Runtime and Pipeline"
+name: "04 · Optional — Mini Runtime Upgrade"
 
 on:
-  schedule:
-    - cron: "17 1 * * *"
   workflow_dispatch:
 
 permissions:

@@ -138,9 +138,12 @@ Actions 화면의 이름은 고객이 실행 순서를 바로 알 수 있도록 
 | 00 | Cloud Agent — Reproducible Setup | Cloud Agent 개발 환경 준비 | Agent setup 전용 |
 | 01 | PR Validation — Unit, UI, E2E, Quality | PR 회귀와 artifact | PR, 수동 |
 | 02 | GHAS — CodeQL Security Scan | 코드 취약점 탐지 | PR, `main`, 주기 |
-| 03 | Upgrade Demo — Mini Runtime and Pipeline | local catalog release 감지와 Issue | 매일, 수동 |
-| 04 | Monitoring — Weekly Quality Review | 비식별 품질 저하 리포트 | 매주, 수동 |
-| 05 | Delivery — Evaluate, Approve, Deploy ACA | 병합 후 평가·승인·배포 | `main`, 수동 |
+| 03 | Delivery — Evaluate, Approve, Deploy ACA | 병합 후 평가·승인·배포 | `main`, 수동 |
+| 04 | Optional — Mini Runtime Upgrade | local catalog release 감지와 Issue | 수동 |
+| 05 | Optional — Weekly Quality Review | 비식별 품질 저하 리포트 | 수동 |
+
+00~03은 기본 기능 개발·배포 흐름입니다. 04~05는 운영 자동화 확장 시나리오이며,
+필요할 때만 수동 실행합니다.
 
 일반 Dependabot version-update schedule은 데모 noise를 줄이기 위해 제거했습니다.
 Dependabot alerts와 security updates는 repository **Security & analysis** 설정에서

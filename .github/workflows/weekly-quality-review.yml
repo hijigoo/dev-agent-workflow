@@ -1,8 +1,6 @@
-name: "04 · Monitoring — Weekly Quality Review"
+name: "05 · Optional — Weekly Quality Review"
 
 on:
-  schedule:
-    - cron: "11 0 * * 1"
   workflow_dispatch:
 
 permissions:

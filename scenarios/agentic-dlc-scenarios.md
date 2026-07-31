@@ -89,7 +89,7 @@ catalog의 최신 버전은 `v1.1.0`으로 둔다.
 
 ### 실행
 
-1. **03 · Upgrade Demo — Mini Runtime and Pipeline** workflow를 수동 실행한다.
+1. **04 · Optional — Mini Runtime Upgrade** workflow를 수동 실행한다.
 2. 동일 버전 Issue가 하나만 생성되는지 확인한다.
 3. 생성된 `agent-ready` Issue를 **Upstream Upgrade** custom agent에 할당한다.
 4. Agent가 Runtime 응답 계약, pipeline stage, 버전 파일과 tests를 조사하는지 확인한다.

@@ -804,7 +804,7 @@
               </div>
               <div class="seq-row">
                 <span class="seq-index">12</span>
-                <div class="message c4-5"><span>main merge → 05 Delivery 실행</span></div>
+                <div class="message c4-5"><span>main merge → 03 Delivery 실행</span></div>
               </div>
               <div class="seq-row">
                 <span class="seq-index">13</span>
@@ -849,7 +849,7 @@
             <h2>Actions 역할과 실행 시점</h2>
           </div>
           <p class="section-description">
-            고객이 Actions 목록만 봐도 순서를 이해하도록 00–05로 번호를 고정했습니다.
+            기본 개발·배포 흐름은 00–03으로 연속 배치하고, 운영 확장은 04–05 Optional로 분리했습니다.
             E2E는 PR Validation에 통합해 중복 workflow와 불필요한 실행을 줄였습니다.
           </p>
         </div>
@@ -874,21 +874,21 @@
           </article>
           <article class="workflow">
             <span class="workflow-index">03</span>
-            <div><h3>Upgrade Demo — Mini Runtime and Pipeline</h3><p>적용 버전과 local release catalog를 비교해 중복 없는 upgrade Issue를 만듭니다.</p></div>
-            <p>산출물: version diff · agent-ready Issue</p>
-            <span class="workflow-trigger">매일 · 수동</span>
-          </article>
-          <article class="workflow">
-            <span class="workflow-index">04</span>
-            <div><h3>Monitoring — Weekly Quality Review</h3><p>비식별 품질 metric을 기준선과 비교하고 개선 후보를 보고합니다.</p></div>
-            <p>산출물: scorecard · regression Issue</p>
-            <span class="workflow-trigger">매주 · 수동</span>
-          </article>
-          <article class="workflow">
-            <span class="workflow-index">05</span>
             <div><h3>Delivery — Evaluate, Approve, Deploy ACA</h3><p>병합 결과를 재평가하고 production 승인 후에만 Azure를 변경합니다.</p></div>
             <p>산출물: image · revision · live URL</p>
             <span class="workflow-trigger">main · 수동</span>
+          </article>
+          <article class="workflow">
+            <span class="workflow-index">04</span>
+            <div><h3>Optional — Mini Runtime Upgrade</h3><p>적용 버전과 local release catalog를 비교해 중복 없는 upgrade Issue를 만듭니다.</p></div>
+            <p>산출물: version diff · agent-ready Issue</p>
+            <span class="workflow-trigger">옵션 · 수동</span>
+          </article>
+          <article class="workflow">
+            <span class="workflow-index">05</span>
+            <div><h3>Optional — Weekly Quality Review</h3><p>비식별 품질 metric을 기준선과 비교하고 개선 후보를 보고합니다.</p></div>
+            <p>산출물: scorecard · regression Issue</p>
+            <span class="workflow-trigger">옵션 · 수동</span>
           </article>
         </div>
       </div>
@@ -961,7 +961,7 @@
             <span class="signal-tag">RELEASE SIGNAL</span>
             <h3>Mini Runtime 업그레이드</h3>
             <p>적용 버전과 demo catalog의 차이를 탐지하고, contract 영향·회귀 matrix·rollback을 포함한 Issue를 만듭니다.</p>
-            <div class="signal-arrow">03 Action → Upgrade Agent → PR → Platform owner</div>
+            <div class="signal-arrow">04 Optional → Upgrade Agent → PR → Platform owner</div>
           </article>
           <article class="signal">
             <span class="signal-tag">SECURITY SIGNAL</span>
@@ -973,7 +973,7 @@
             <span class="signal-tag">QUALITY SIGNAL</span>
             <h3>주간 품질 개선</h3>
             <p>민감 원문 없이 fallback·latency·tool success를 분석하고, 사람이 선택한 개선 후보만 별도 구현 Issue로 전환합니다.</p>
-            <div class="signal-arrow">04 Action → Read-only analysis → Owner decision → Agent PR</div>
+            <div class="signal-arrow">05 Optional → Read-only analysis → Owner decision → Agent PR</div>
           </article>
         </div>
       </div>
@@ -999,7 +999,7 @@
               <div class="demo-step"><div><h4>Mini Agent 앱 · 5분</h4><p>외부 key 없이 intent, answer, pipeline trace를 실행합니다.</p></div></div>
               <div class="demo-step"><div><h4>Issue → Cloud Agent · 10분</h4><p>한국어 회의실 검색 과업, Copilot assignee, session log를 확인합니다.</p></div></div>
               <div class="demo-step"><div><h4>Draft PR와 검증 · 10분</h4><p>Agent diff, 01/02 checks, E2E artifact와 리뷰 feedback을 봅니다.</p></div></div>
-              <div class="demo-step"><div><h4>운영 자동 과업 · 10분</h4><p>03 upgrade, 04 quality, GHAS remediation의 공통 패턴을 설명합니다.</p></div></div>
+              <div class="demo-step"><div><h4>운영 자동 과업 · 10분</h4><p>04 upgrade, 05 quality, GHAS remediation의 공통 패턴을 설명합니다.</p></div></div>
               <div class="demo-step"><div><h4>승인형 ACA 배포 · 5분</h4><p>평가 성공, production 승인 대기, live health evidence를 확인합니다.</p></div></div>
             </div>
           </article>
