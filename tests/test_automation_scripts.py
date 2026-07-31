@@ -98,7 +98,7 @@ class QualityReportTests(unittest.TestCase):
 
 class DeliveryWorkflowTests(unittest.TestCase):
     def test_delivery_notifies_closing_issue_before_deployment(self):
-        workflow = (ROOT / ".github" / "workflows" / "deploy-aca.yml").read_text(
+        workflow = (ROOT / ".github" / "workflows" / "agentic-delivery.yml").read_text(
             encoding="utf-8"
         )
 
@@ -113,28 +113,25 @@ class DeliveryWorkflowTests(unittest.TestCase):
 
 
 class PullRequestWorkflowTests(unittest.TestCase):
-    def test_validation_waits_until_pull_request_is_ready(self):
-        workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
+    def test_unified_validation_waits_until_pull_request_is_ready(self):
+        workflow = (ROOT / ".github" / "workflows" / "agentic-delivery.yml").read_text(
             encoding="utf-8"
         )
 
         self.assertIn("ready_for_review", workflow)
-        self.assertEqual(
-            workflow.count("github.event.pull_request.draft == false"),
-            3,
-        )
+        self.assertEqual(workflow.count("github.event.pull_request.draft == false"), 1)
+        self.assertIn("needs: pr-quality", workflow)
+        self.assertIn("needs: [pr-quality, pr-security]", workflow)
 
-    def test_codeql_waits_until_pull_request_is_ready(self):
-        workflow = (ROOT / ".github" / "workflows" / "codeql.yml").read_text(
+    def test_codeql_runs_for_pr_and_schedule_but_not_after_merge(self):
+        workflow = (ROOT / ".github" / "workflows" / "agentic-delivery.yml").read_text(
             encoding="utf-8"
         )
 
-        self.assertIn("ready_for_review", workflow)
-        self.assertIn(
-            "github.event_name != 'pull_request' || "
-            "github.event.pull_request.draft == false",
-            workflow,
-        )
+        self.assertIn("pr-security:", workflow)
+        self.assertIn("scheduled-security:", workflow)
+        self.assertEqual(workflow.count("github/codeql-action/init@v4"), 2)
+        self.assertNotIn("post-merge-security:", workflow)
 
 
 if __name__ == "__main__":
