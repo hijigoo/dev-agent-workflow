@@ -32,7 +32,9 @@ infra/                   ACR·Container Apps·managed identity Bicep
 docs/                    Azure OIDC와 production 승인 설정 가이드
 ```
 
-고객 발표 자료는 [`cloud-agent-ax-workshop.html`](cloud-agent-ax-workshop.html)입니다.
+전체 workflow와 시퀀스 다이어그램은
+[`agentic-devops-workflow.html`](agentic-devops-workflow.html),
+상세 고객 workshop은 [`cloud-agent-ax-workshop.html`](cloud-agent-ax-workshop.html)입니다.
 Agentic DLC 실습과 평가표는
 [`scenarios/agentic-dlc-scenarios.md`](scenarios/agentic-dlc-scenarios.md)를 사용합니다.
 브라우저의 **Mini Agent** 화면은 별도 model/API key 없이 즉시 실행됩니다. 작은
