@@ -148,9 +148,10 @@ PR 검증과 Main 배포를 서로 다른 workflow로 분리해 실행 원인과
 | Main 3/3 | Production approval and ACA deployment | 승인 후 OIDC·ACR·ACA 배포 | 운영 승인 후 |
 
 Copilot이 만든 Draft/WIP PR에서는 PR Validation job을 실행하지 않습니다.
-**Ready for review** 전환 후 PR 1/2~2/2를 순서대로 수행하며, 이후 commit이
-추가되면 최신 commit을 다시 검증합니다. CodeQL은 PR 2/2에서 한 번 실행하고
-merge 후에는 다시 실행하지 않습니다.
+**Ready for review** 전환 시 PR 1/2~2/2를 순서대로 한 번 수행합니다. Draft에서는
+workflow run 자체가 생성되지 않습니다. Ready 이후 commit이 추가되면 Actions에서
+`01 · PR Validation`을 수동 실행합니다. CodeQL은 PR 2/2에서 한 번 실행하고 merge
+후에는 다시 실행하지 않습니다.
 
 `03 · Optional — Scheduled Security and Quality Review`는 주간 CodeQL과 수동
 비식별 품질 검토를 담당합니다.

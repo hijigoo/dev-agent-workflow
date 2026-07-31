@@ -1018,7 +1018,7 @@
               </div>
               <div class="seq-row">
                 <span class="seq-index">10</span>
-                <div class="message c4-5"><span>최신 commit 재검증</span></div>
+                <div class="message c4-5"><span>후속 commit은 01 수동 재검증</span></div>
               </div>
               <div class="seq-row">
                 <span class="seq-index">11</span>
@@ -1084,7 +1084,7 @@
           </article>
           <article class="workflow">
             <span class="workflow-index">01</span>
-            <div><h3>01 · PR Validation — Quality and CodeQL</h3><p>Ready for review PR에서 품질 검증과 CodeQL을 순차 실행하고, 새 commit마다 다시 검증합니다.</p></div>
+            <div><h3>01 · PR Validation — Quality and CodeQL</h3><p>Ready for review 전환 시 품질 검증과 CodeQL을 순차 실행합니다. Draft run은 만들지 않습니다.</p></div>
             <p>산출물: test·CodeQL·quality artifact</p>
             <span class="workflow-trigger">Ready PR · 수동</span>
           </article>
@@ -1197,7 +1197,7 @@
               <span class="test-step-index">04</span>
               <div>
                 <h4>01 · PR Validation의 PR 1/2~2/2를 실행합니다</h4>
-                <p>PR이 Ready for review가 되면 품질 검증과 CodeQL이 한 run에서 순차 실행됩니다. Draft 상태에서는 PR job이 Skipped로 표시됩니다.</p>
+                <p>PR이 Ready for review가 되면 품질 검증과 CodeQL이 한 run에서 순차 실행됩니다. Draft 상태에서는 workflow run 자체가 생성되지 않습니다.</p>
                 <span class="ui-path">Pull request → Checks → Approve and run workflows 또는 Re-run all jobs</span>
                 <ul>
                   <li><strong>PR 1/2:</strong> Python, React lint/unit/build, Playwright E2E, quality artifact</li>
@@ -1216,7 +1216,7 @@
 기존 영어 room-search 테스트가 유지되는지 확인해 주세요.
 workflow와 Azure 설정은 변경하지 마세요.</pre>
                 <ul>
-                  <li>후속 commit이 올라오면 PR Validation의 최신 PR 1/2~2/2 결과를 다시 확인합니다.</li>
+                  <li>Ready 이후 후속 commit이 올라오면 Actions에서 01 · PR Validation을 수동 실행합니다.</li>
                   <li>요청자와 다른 독립 reviewer가 승인합니다.</li>
                   <li>모든 conversation이 해결된 뒤에만 merge합니다.</li>
                 </ul>

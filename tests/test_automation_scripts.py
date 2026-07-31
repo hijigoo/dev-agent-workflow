@@ -120,7 +120,8 @@ class PullRequestWorkflowTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
 
         self.assertIn("ready_for_review", workflow)
-        self.assertEqual(workflow.count("github.event.pull_request.draft == false"), 1)
+        self.assertNotIn("synchronize", workflow)
+        self.assertNotIn("github.event.pull_request.draft", workflow)
         self.assertIn("needs: quality", workflow)
         self.assertIn('name: "PR 1/2 · Quality validation"', workflow)
         self.assertIn('name: "PR 2/2 · CodeQL security"', workflow)
