@@ -747,8 +747,8 @@
         </p>
         <div class="hero-actions">
           <a class="button primary" href="#sequence">전체 시퀀스 보기</a>
-          <a class="button" href="https://github.com/hijigoo/dev-agent-workflow">GitHub 저장소</a>
-          <a class="button" href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io">배포 사이트</a>
+          <a class="button" href="https://github.com/hijigoo/dev-agent-workflow" target="_blank" rel="noreferrer">GitHub 저장소</a>
+          <a class="button" href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io" target="_blank" rel="noreferrer">배포 사이트</a>
         </div>
         <div class="status-strip" aria-label="현재 데모 상태">
           <div class="status-item">
@@ -791,7 +791,7 @@
           <article class="flow-step">
             <span class="flow-kicker">01 · SIGNAL</span>
             <h3>과업 등록</h3>
-            <p>Jira, Slack, Work Intake에서 배경·인수 조건·제외 범위를 작성합니다.</p>
+            <p>Jira, Slack, <a href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io" target="_blank" rel="noreferrer">Work Intake</a>에서 배경·인수 조건·제외 범위를 작성합니다. 배포 사이트 상단의 <strong>Work Intake</strong> 메뉴를 선택합니다.</p>
           </article>
           <article class="flow-step">
             <span class="flow-kicker">02 · ASSIGN</span>
@@ -1154,7 +1154,12 @@ curl --fail "$WEB_URL/health"
 curl --fail "$WEB_URL/api/health"
 curl --fail "$WEB_URL/api/agent/about"
 curl --fail "$WEB_URL/intake/health"</pre>
-                <a class="button primary" href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io">배포 사이트 열기</a>
+                <div class="hero-actions">
+                  <a class="button primary" href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io" target="_blank" rel="noreferrer">배포 사이트 열기</a>
+                  <a class="button" href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/health" target="_blank" rel="noreferrer">Web health</a>
+                  <a class="button" href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/api/health" target="_blank" rel="noreferrer">Meeting API health</a>
+                  <a class="button" href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/intake/health" target="_blank" rel="noreferrer">Work Intake health</a>
+                </div>
                 <span class="step-result">기대 결과 · Web와 두 internal API의 HTTPS health 성공</span>
               </div>
             </article>
@@ -1306,7 +1311,12 @@ npm run test:e2e</pre>
               <div class="check">리뷰 feedback 전후 commit과 변경 범위</div>
               <div class="check">production Environment required reviewer 대기 화면</div>
               <div class="check">OIDC 로그인과 ACR/ACA 배포 summary</div>
-              <div class="check">Web, Meeting API, Work Intake HTTPS health 결과</div>
+              <div class="check">
+                HTTPS health:
+                <a href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/health" target="_blank" rel="noreferrer">Web</a> ·
+                <a href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/api/health" target="_blank" rel="noreferrer">Meeting API</a> ·
+                <a href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/intake/health" target="_blank" rel="noreferrer">Work Intake</a>
+              </div>
             </div>
             <div class="callout">
               <strong>시연 종료 상태</strong>

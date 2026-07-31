@@ -38,9 +38,9 @@ For UI workflows also run `npm run test:e2e`.
 
 Include:
 
-1. Issue or alert that triggered the work.
+1. Issue or alert that triggered the work. Start the PR body with
+   `Closes #<issue-number>` so delivery automation can notify the original Issue.
 2. Scope and intentionally excluded changes.
 3. Commands and test counts.
 4. Security, compatibility, privacy, and rollback considerations.
 5. Unresolved items requiring a human decision.
-

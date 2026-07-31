@@ -123,7 +123,7 @@ GitHub App for Slack을 설치하고 DM 또는 비민감 thread에서 `@GitHub C
 | 답변 품질 | 비식별 golden 품질 데이터와 주간 scorecard 예시 |
 | 신규 기능 | Issue template + custom agents + required checks |
 | 로그 모니터링 | `weekly-quality-review.yml` + `scripts/build_quality_report.py` |
-| 승인 후 Azure 배포 | `deploy-aca.yml` + Bicep + GitHub `production` Environment |
+| 승인 후 Azure 배포 | 원본 Issue 승인 대기 알림 + `production` Environment + ACA |
 
 ## GitHub Actions 데모 순서
 
@@ -134,7 +134,7 @@ Actions 화면의 이름은 고객이 실행 순서를 바로 알 수 있도록 
 | 00 | Cloud Agent — Reproducible Setup | Cloud Agent 개발 환경 준비 | Agent setup 전용 |
 | 01 | PR Validation — Unit, UI, E2E, Quality | PR 회귀와 artifact | PR, 수동 |
 | 02 | GHAS — CodeQL Security Scan | 코드 취약점 탐지 | PR, `main`, 주기 |
-| 03 | Delivery — Evaluate, Approve, Deploy ACA | 병합 후 평가·승인·배포 | `main`, 수동 |
+| 03 | Delivery — Evaluate, Approve, Deploy ACA | 평가 후 원본 Issue 알림·승인·배포 | `main`, 수동 |
 | 04 | Optional — Weekly Quality Review | 비식별 품질 저하 리포트 | 수동 |
 
 00~03은 기본 기능 개발·배포 흐름입니다. 04는 운영 품질 모니터링이 필요할 때만

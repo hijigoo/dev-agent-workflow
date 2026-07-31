@@ -65,7 +65,7 @@ jobs:
       - name: Run Playwright
         working-directory: apps/web
         run: npm run test:e2e
-      - name: Build sample quality scorecard
+      - name: 한글 품질 리포트 생성
         run: |
           python scripts/build_quality_report.py \
             --input samples/quality-metrics.json \

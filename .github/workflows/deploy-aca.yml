@@ -47,7 +47,7 @@ jobs:
       - name: Run browser E2E
         working-directory: apps/web
         run: npm run test:e2e
-      - name: Build privacy-safe quality scorecard
+      - name: 비식별 한글 품질 리포트 생성
         run: |
           python scripts/build_quality_report.py \
             --input samples/quality-metrics.json \
@@ -65,9 +65,123 @@ jobs:
             quality-report.md
           retention-days: 30
 
+  notify-approval:
+    name: 원본 Issue에 배포 승인 대기 알림
+    needs: evaluate
+    if: vars.ACA_DEPLOYMENT_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    steps:
+      - name: 연결된 Issue에 승인 링크 추가
+        uses: actions/github-script@v9
+        with:
+          script: |
+           const { owner, repo } = context.repo;
+           const runUrl =
+             `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+           const pulls = await github.paginate(
+             github.rest.repos.listPullRequestsAssociatedWithCommit,
+             {
+               owner,
+               repo,
+               commit_sha: context.sha,
+               per_page: 100,
+             },
+           );
+           const pull = pulls
+             .filter((candidate) => candidate.merged_at)
+             .sort((left, right) =>
+               right.merged_at.localeCompare(left.merged_at),
+             )[0];
+
+           if (!pull) {
+             const message =
+               "병합 commit에 연결된 PR이 없어 원본 Issue 알림을 생략합니다.";
+             core.warning(message);
+             await core.summary
+               .addHeading("Production 배포 승인 알림")
+               .addRaw(`⚠️ ${message}`)
+               .write();
+             return;
+           }
+
+           const result = await github.graphql(
+             `query ClosingIssues(
+               $owner: String!
+               $repo: String!
+               $number: Int!
+             ) {
+               repository(owner: $owner, name: $repo) {
+                 pullRequest(number: $number) {
+                   closingIssuesReferences(first: 20) {
+                     nodes {
+                       number
+                     }
+                   }
+                 }
+               }
+             }`,
+             { owner, repo, number: pull.number },
+           );
+           const issues =
+             result.repository.pullRequest.closingIssuesReferences.nodes;
+
+           if (issues.length === 0) {
+             const message =
+               `PR #${pull.number}에 Closes #이슈번호가 없어 ` +
+               "원본 Issue 알림을 생략합니다.";
+             core.warning(message);
+             await core.summary
+               .addHeading("Production 배포 승인 알림")
+               .addRaw(`⚠️ ${message}`)
+               .write();
+             return;
+           }
+
+           const notified = [];
+           for (const issue of issues) {
+             const marker =
+               `<!-- aca-deployment-approval:${context.sha}:issue-${issue.number} -->`;
+             const comments = await github.paginate(
+               github.rest.issues.listComments,
+               { owner, repo, issue_number: issue.number, per_page: 100 },
+             );
+             if (comments.some((comment) => comment.body?.includes(marker))) {
+               core.info(`Issue #${issue.number}에는 이미 알림이 있습니다.`);
+               notified.push(`#${issue.number} (기존 댓글)`);
+               continue;
+             }
+
+             await github.rest.issues.createComment({
+               owner,
+               repo,
+               issue_number: issue.number,
+               body: `${marker}
+           ## 🚀 Production 배포 승인 대기
+
+           - **PR:** #${pull.number} 병합 완료
+           - **병합 후 평가:** ✅ 통과
+           - **배포 revision:** \`${context.sha.slice(0, 7)}\`
+           - **현재 상태:** ⏸️ 사용자 승인 대기
+
+           [Actions에서 배포 검토하기](${runUrl})
+
+           실제 Azure 배포는 \`production\` Environment의 승인 이후에만 시작됩니다.`,
+             });
+             notified.push(`#${issue.number}`);
+           }
+
+           await core.summary
+             .addHeading("Production 배포 승인 알림")
+             .addRaw(`승인 대기 댓글을 추가한 Issue: ${notified.join(", ")}`)
+             .write();
+
   deploy:
     name: Production approval and ACA deployment
-    needs: evaluate
+    needs: [evaluate, notify-approval]
     if: vars.ACA_DEPLOYMENT_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45

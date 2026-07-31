@@ -21,6 +21,19 @@ FORBIDDEN_KEYS = {
     "phone",
 }
 
+METRIC_LABELS = {
+    "task_completion_rate": "작업 완료율",
+    "tool_success_rate": "도구 실행 성공률",
+    "fallback_rate": "대체 처리 비율",
+    "no_answer_rate": "무응답 비율",
+    "p95_latency_ms": "응답 지연시간(P95)",
+}
+
+CLUSTER_LABELS = {
+    "provider-timeout": "외부 제공자 응답 시간 초과",
+    "tool-schema-mismatch": "도구 입력 형식 불일치",
+}
+
 
 def reject_sensitive_fields(value: Any, path: str = "$") -> None:
     if isinstance(value, dict):
@@ -76,6 +89,41 @@ def is_regression(metric: dict[str, Any], relative_threshold: float) -> bool:
     return change < -relative_threshold if not lower_is_bad else change > relative_threshold
 
 
+def format_value(name: str, value: int | float) -> str:
+    if name.endswith("_rate"):
+        return f"{value * 100:.1f}%"
+    if name.endswith("_ms"):
+        return f"{value:,.0f} ms"
+    return f"{value:,.4g}"
+
+
+def format_change(name: str, change: float) -> str:
+    if name.endswith("_rate"):
+        return f"{change * 100:+.1f}%p"
+    if name.endswith("_ms"):
+        return f"{change:+,.0f} ms"
+    return f"{change:+,.4g}"
+
+
+def format_relative_change(metric: dict[str, Any]) -> str:
+    current = float(metric["current"])
+    baseline = float(metric["baseline"])
+    if baseline == 0:
+        return "계산 불가"
+    return f"{(current - baseline) / abs(baseline) * 100:+.1f}%"
+
+
+def format_period(value: Any) -> str:
+    labels = {
+        "week": "이번 주",
+        "baseline": "기준 기간",
+        "previous-4-weeks": "직전 4주 평균",
+        "unknown": "정보 없음",
+    }
+    text = str(value)
+    return labels.get(text, text)
+
+
 def build_report(payload: dict[str, Any], threshold: float = 0.1) -> tuple[str, int]:
     reject_sensitive_fields(payload)
     metrics = payload.get("metrics")
@@ -92,9 +140,14 @@ def build_report(payload: dict[str, Any], threshold: float = 0.1) -> tuple[str, 
         regressed = is_regression(metric, threshold)
         if regressed:
             regressions.append(name)
+        direction = "낮을수록 좋음" if metric["lower_is_bad"] else "높을수록 좋음"
+        label = METRIC_LABELS.get(name, name.replace("_", " "))
         rows.append(
-            f"| `{name}` | {metric['current']} | {metric['baseline']} | "
-            f"{change:+.4g} | {'REGRESSION' if regressed else 'OK'} |"
+            f"| **{label}**<br><sub>`{name}`</sub> | "
+            f"{format_value(name, metric['current'])} | "
+            f"{format_value(name, metric['baseline'])} | "
+            f"{format_change(name, change)} | {format_relative_change(metric)} | "
+            f"{direction} | {'⚠️ 기준 대비 저하' if regressed else '✅ 허용 범위'} |"
         )
 
     cluster_lines = []
@@ -105,38 +158,49 @@ def build_report(payload: dict[str, Any], threshold: float = 0.1) -> tuple[str, 
     )[:5]:
         if not isinstance(cluster, dict):
             raise ValueError("Cluster entries must be objects")
+        cluster_name = str(cluster.get("name", "unknown"))
+        cluster_label = CLUSTER_LABELS.get(cluster_name, cluster_name.replace("-", " "))
         cluster_lines.append(
-            f"- **{cluster.get('name', 'unknown')}**: {cluster.get('count', 0)} "
-            f"events (`{cluster.get('evidence', 'no-evidence')}`)"
+            f"- **{cluster_label}**: {cluster.get('count', 0)}건 "
+            f"(근거: `{cluster.get('evidence', '근거 없음')}`)"
         )
 
+    threshold_percent = threshold * 100
     report = "\n".join(
         [
-            "# Weekly agent quality report",
+            "# 에이전트 품질 리포트",
             "",
-            f"- Period: `{payload.get('period', 'unknown')}`",
-            f"- Baseline: `{payload.get('baseline_period', 'unknown')}`",
-            f"- Regressions: **{len(regressions)}**",
+            f"- **분석 기간:** {format_period(payload.get('period', 'unknown'))}",
+            f"- **비교 기준:** {format_period(payload.get('baseline_period', 'unknown'))}",
+            f"- **기준 대비 저하 지표:** **{len(regressions)}개**",
+            f"- **판정 기준:** 비교 기준보다 **{threshold_percent:g}% 초과 악화**",
             "",
-            "| Metric | Current | Baseline | Change | Status |",
-            "|---|---:|---:|---:|---|",
+            "> **‘기준 대비 저하’란?** 현재 값이 비교 기준보다 설정된 허용 범위를 "
+            "넘어 나빠졌다는 의미입니다. 테스트 실패를 뜻하지 않으며, 원인 확인이 "
+            "필요한 품질 추세를 표시합니다.",
+            "",
+            "| 품질 지표 | 현재 값 | 기준 값 | 값의 변화 | 기준 대비 변화율 | 좋은 방향 | 판정 |",
+            "|---|---:|---:|---:|---:|---|---|",
             *rows,
             "",
-            "## Top aggregate failure clusters",
+            "## 주요 실패 유형",
             "",
-            *(cluster_lines or ["- No aggregate failure clusters supplied."]),
+            *(cluster_lines or ["- 집계된 실패 유형이 없습니다."]),
             "",
-            "## Recommended next step",
+            "## 권장 조치",
             "",
             (
-                "Create a review issue for the regressed metrics: "
-                + ", ".join(f"`{name}`" for name in regressions)
+                "다음 저하 지표의 집계 근거와 원인을 검토하세요: "
+                + ", ".join(
+                    f"**{METRIC_LABELS.get(name, name.replace('_', ' '))}**"
+                    for name in regressions
+                )
                 if regressions
-                else "No threshold breach. Keep the current monitoring cadence."
+                else "허용 범위를 벗어난 지표가 없습니다. 현재 모니터링 주기를 유지하세요."
             ),
             "",
-            "> This report accepts aggregate data only. It must not contain raw prompts, "
-            "transcripts, user identifiers, email addresses, or phone numbers.",
+            "> 이 리포트는 비식별 집계 데이터만 사용합니다. 원문 프롬프트, 대화 내용, "
+            "사용자 식별자, 이메일 주소 또는 전화번호를 포함하면 안 됩니다.",
         ]
     )
     return report, len(regressions)
@@ -177,4 +241,3 @@ if __name__ == "__main__":
     except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         sys.exit(1)
-

@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: "3.12"
       - id: report
-        name: Build privacy-safe report
+        name: 비식별 품질 리포트 생성
         env:
           QUALITY_METRICS_URL: ${{ vars.QUALITY_METRICS_URL }}
           QUALITY_METRICS_TOKEN: ${{ secrets.QUALITY_METRICS_TOKEN }}
@@ -34,7 +34,7 @@ jobs:
           name: weekly-quality-report
           path: quality-report.md
           retention-days: 30
-      - name: Create regression review issue
+      - name: 품질 저하 검토 Issue 생성
         if: steps.report.outputs.regression_count != '0'
         uses: actions/github-script@v9
         with:
@@ -46,17 +46,17 @@ jobs:
               owner, repo, state: "open", labels: "quality-regression", per_page: 100
             });
             if (open.some(issue => issue.body?.includes(marker))) {
-              core.info("This week's review issue already exists");
+              core.info("이번 주 품질 검토 Issue가 이미 존재합니다.");
               return;
             }
             await github.rest.issues.create({
               owner,
               repo,
-              title: `[Quality] Weekly regression review ${new Date().toISOString().slice(0, 10)}`,
+              title: `[품질] 주간 품질 저하 검토 ${new Date().toISOString().slice(0, 10)}`,
               labels: ["quality-regression", "needs-review"],
               body: `${marker}\n${fs.readFileSync("quality-report.md", "utf8")}
 
-            ## Next step
-            Validate the aggregate evidence. Create a separate agent-ready implementation
-            issue only for an approved improvement. Do not expose raw prompts or transcripts.`
+            ## 다음 단계
+            집계된 근거를 검토하세요. 개선이 승인된 경우에만 별도의 Agent-ready 구현
+            Issue를 생성하세요. 원문 프롬프트나 대화 내용은 공개하지 마세요.`
             });
