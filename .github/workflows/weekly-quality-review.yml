@@ -1,4 +1,4 @@
-name: "05 · Optional — Weekly Quality Review"
+name: "04 · Optional — Weekly Quality Review"
 
 on:
   workflow_dispatch:

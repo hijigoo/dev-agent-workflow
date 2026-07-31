@@ -16,39 +16,7 @@ def load_script(name: str):
     return module
 
 
-release_watch = load_script("check_upstream_releases")
 quality_report = load_script("build_quality_report")
-
-
-class ReleaseWatchTests(unittest.TestCase):
-    def test_only_changed_versions_are_reported(self):
-        config = {
-            "mini-agent-runtime": {
-                "repository": "hijigoo/dev-agent-workflow",
-                "installed_version": "v1",
-            },
-            "mini-pipeline-sdk": {
-                "repository": "hijigoo/dev-agent-workflow",
-                "installed_version": "v2",
-            },
-        }
-        releases = {
-            "mini-agent-runtime": {"tag_name": "v1", "html_url": "https://example/v1"},
-            "mini-pipeline-sdk": {"tag_name": "v3", "html_url": "https://example/v3"},
-        }
-
-        updates = release_watch.compare_versions(config, releases)
-
-        self.assertEqual(len(updates), 1)
-        self.assertEqual(updates[0]["dependency"], "mini-pipeline-sdk")
-        self.assertEqual(updates[0]["latest_version"], "v3")
-
-    def test_invalid_configuration_is_rejected(self):
-        with self.assertRaises(ValueError):
-            release_watch.compare_versions(
-                {"mini-agent-runtime": {"repository": "hijigoo/dev-agent-workflow"}},
-                {"mini-agent-runtime": {"tag_name": "v1"}},
-            )
 
 
 class QualityReportTests(unittest.TestCase):

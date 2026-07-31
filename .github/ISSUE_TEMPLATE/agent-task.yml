@@ -8,7 +8,6 @@ body:
     attributes:
       label: Scenario
       options:
-        - Upstream release upgrade
         - Security remediation
         - E2E quality regression
         - New feature
@@ -62,4 +61,3 @@ body:
           required: true
         - label: A human owner and independent reviewer are identified.
           required: true
-

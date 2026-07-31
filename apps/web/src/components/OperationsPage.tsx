@@ -8,23 +8,6 @@ const weeklyMetrics = [
   { day: 'Sun', score: 98 },
 ]
 
-const releases = [
-  {
-    project: 'Mini Agent Runtime',
-    version: 'v1.1.0',
-    published: 'demo catalog',
-    summary: 'Adds a new deterministic intent while preserving the response contract.',
-    status: 'Review',
-  },
-  {
-    project: 'Mini Pipeline SDK',
-    version: 'v1.0.0',
-    published: 'installed',
-    summary: 'Normalize, classify, and respond stages are at the tracked version.',
-    status: 'Ready',
-  },
-]
-
 export function OperationsPage() {
   return (
     <main className="page-shell content-stack page-top operations-page">
@@ -32,7 +15,7 @@ export function OperationsPage() {
         <div>
           <p className="eyebrow">Cloud Agent control plane</p>
           <h1>Operations overview</h1>
-          <p>Release posture, security health, and conversational quality at a glance.</p>
+          <p>Security health and conversational quality at a glance.</p>
         </div>
         <span className="last-updated"><i aria-hidden="true" /> Updated just now</span>
       </div>
@@ -60,49 +43,9 @@ export function OperationsPage() {
           <p><b>0 critical</b> · 1 high · 1 medium</p>
           <a href="#security-alerts">Review alert queue →</a>
         </article>
-        <article className="metric-card">
-          <div className="metric-card-header">
-            <span>Release readiness</span>
-            <span className="metric-icon success" aria-hidden="true">✓</span>
-          </div>
-          <div className="score-row"><strong>12/12</strong><span>checks</span></div>
-          <p>Mini Runtime candidate passed staging</p>
-          <span className="tag success">Ready to promote</span>
-        </article>
       </section>
 
-      <div className="operations-grid">
-        <section className="panel releases-panel" aria-labelledby="releases-title">
-          <div className="panel-header">
-            <div>
-              <p className="eyebrow">Dependency radar</p>
-              <h2 id="releases-title">Upstream releases</h2>
-            </div>
-            <span className="tag neutral">2 updates</span>
-          </div>
-          <div className="release-list">
-            {releases.map((release) => (
-              <article className="release-row" key={release.project}>
-                <div className="project-mark" aria-hidden="true">
-                  {release.project.slice(0, 1)}
-                </div>
-                <div>
-                  <div className="release-title">
-                    <h3>{release.project}</h3>
-                    <code>{release.version}</code>
-                  </div>
-                  <p>{release.summary}</p>
-                  <small>Published {release.published}</small>
-                </div>
-                <span className={`tag ${release.status === 'Ready' ? 'success' : 'warning'}`}>
-                  {release.status}
-                </span>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="panel quality-panel" aria-labelledby="weekly-title">
+      <section className="panel quality-panel" aria-labelledby="weekly-title">
           <div className="panel-header">
             <div>
               <p className="eyebrow">Last 7 days</p>
@@ -126,8 +69,7 @@ export function OperationsPage() {
             <div><dt>Median latency</dt><dd>812 ms</dd></div>
             <div><dt>Tests executed</dt><dd>14,280</dd></div>
           </dl>
-        </section>
-      </div>
+      </section>
 
       <section className="panel" id="security-alerts" aria-labelledby="alerts-title">
         <div className="panel-header">

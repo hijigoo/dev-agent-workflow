@@ -53,14 +53,6 @@ export const sampleRooms: Room[] = [
 
 export const workScenarios: WorkScenario[] = [
   {
-    id: 'upstream-release',
-    externalKey: 'cloud-agent:upstream-release',
-    label: 'Upstream release adoption',
-    description: 'Evaluate a simulated Mini Agent Runtime or Pipeline release.',
-    defaultTitle: 'Upgrade the Mini Agent Runtime',
-    defaultLabels: ['dependencies', 'cloud-agent'],
-  },
-  {
     id: 'security-alert',
     externalKey: 'cloud-agent:security-alert',
     label: 'Security alert remediation',
