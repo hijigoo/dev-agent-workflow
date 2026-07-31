@@ -28,7 +28,7 @@ Signal/Requirement
 - `copilot-setup-steps.yml`, CI, E2E, CodeQL을 기본 브랜치에서 먼저 성공
 - ruleset에 required checks와 독립 reviewer 승인 적용
 - Jira/Slack 연동은 샘플·비민감 프로젝트에만 연결
-- `dependencies/upstream-versions.json`의 적용 버전을 실제 값으로 교체
+- `dependencies/upstream-versions.json`과 demo release catalog의 버전 차이를 확인
 - 운영 로그 대신 `samples/quality-metrics.json` 사용
 
 ## 시나리오 1 — Jira 요구사항에서 신규 기능까지
@@ -76,7 +76,7 @@ API 계약이나 라우팅 구조는 변경하지 마세요.
 
 ---
 
-## 시나리오 2 — Dograh 또는 Pipecat 업스트림 업그레이드
+## 시나리오 2 — Mini Agent Runtime 업그레이드
 
 ### 검증 목적
 
@@ -84,22 +84,23 @@ API 계약이나 라우팅 구조는 변경하지 마세요.
 
 ### 시작 조건
 
-`dependencies/upstream-versions.json`에서 한 프로젝트의 적용 버전을 최신 버전보다 한 단계 낮게 설정한다.
+`dependencies/upstream-versions.json`의 Runtime 적용 버전은 `v1.0.0`, demo release
+catalog의 최신 버전은 `v1.1.0`으로 둔다.
 
 ### 실행
 
-1. **Watch upstream releases** workflow를 수동 실행한다.
+1. **03 · Upgrade Demo — Mini Runtime and Pipeline** workflow를 수동 실행한다.
 2. 동일 버전 Issue가 하나만 생성되는지 확인한다.
 3. 생성된 `agent-ready` Issue를 **Upstream Upgrade** custom agent에 할당한다.
-4. Agent가 release notes, migration guide, adapter 코드를 조사하는지 확인한다.
-5. PR에서 manifest·lockfile·adapter·test 외의 불필요한 변경이 없는지 검토한다.
-6. unit, integration, E2E, pipeline smoke와 rollback 설명을 확인한다.
-7. major/breaking change이면 플랫폼 owner가 채택 여부를 결정한다.
+4. Agent가 Runtime 응답 계약, pipeline stage, 버전 파일과 tests를 조사하는지 확인한다.
+5. PR에서 해당 component와 test 외의 불필요한 변경이 없는지 검토한다.
+6. API unit, React component, Playwright E2E와 rollback 설명을 확인한다.
+7. 응답 contract 변경이면 플랫폼 owner가 채택 여부를 결정한다.
 
 ### 기대 증거
 
 - scheduled/manual workflow run
-- before/after 버전과 upstream release URL
+- before/after 버전과 demo release catalog
 - 중복 없는 Issue
 - breaking change 영향표
 - regression matrix와 artifact
@@ -107,7 +108,7 @@ API 계약이나 라우팅 구조는 변경하지 마세요.
 
 ### 실패 주입
 
-- 잘못된 upstream repository를 설정해 workflow가 명확히 실패하는지 확인한다.
+- release catalog에서 component key를 제거해 workflow가 명확히 실패하는지 확인한다.
 - E2E fixture를 의도적으로 깨뜨려 병합이 차단되는지 확인한다.
 
 ---

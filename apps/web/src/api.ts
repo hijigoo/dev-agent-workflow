@@ -1,5 +1,6 @@
 import type {
   ApiRoom,
+  AgentResponse,
   Reservation,
   ReservationInput,
   WorkItemInput,
@@ -47,6 +48,14 @@ export const reservationsApi = {
   cancel: (id: number) =>
     request<Reservation>(API_URL, `/reservations/${encodeURIComponent(id)}`, {
       method: 'DELETE',
+    }),
+}
+
+export const agentApi = {
+  respond: (message: string) =>
+    request<AgentResponse>(API_URL, '/agent/respond', {
+      method: 'POST',
+      body: JSON.stringify({ message }),
     }),
 }
 

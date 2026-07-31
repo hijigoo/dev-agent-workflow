@@ -1,0 +1,12 @@
+{
+  "mini-agent-runtime": {
+    "tag_name": "v1.1.0",
+    "html_url": "https://github.com/hijigoo/dev-agent-workflow/tree/main/apps/api",
+    "published_at": "2026-07-30T00:00:00Z"
+  },
+  "mini-pipeline-sdk": {
+    "tag_name": "v1.0.0",
+    "html_url": "https://github.com/hijigoo/dev-agent-workflow/tree/main/apps/api",
+    "published_at": "2026-07-29T00:00:00Z"
+  }
+}

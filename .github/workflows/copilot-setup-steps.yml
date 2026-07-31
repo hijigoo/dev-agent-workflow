@@ -1,4 +1,4 @@
-name: Copilot Setup Steps
+name: "00 · Cloud Agent — Reproducible Setup"
 
 on:
   workflow_dispatch:
@@ -34,4 +34,3 @@ jobs:
       - name: Install web dependencies
         working-directory: apps/web
         run: npm ci
-

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare tracked upstream versions with the latest GitHub releases."""
+"""Compare tracked component versions with a deterministic demo release catalog."""
 
 from __future__ import annotations
 
@@ -7,35 +7,8 @@ import argparse
 import json
 import os
 import sys
-import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any
-
-
-def latest_release(repository: str, token: str | None = None) -> dict[str, Any]:
-    request = urllib.request.Request(
-        f"https://api.github.com/repos/{repository}/releases/latest",
-        headers={
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "cloud-agent-platform-demo",
-            **({"Authorization": f"Bearer {token}"} if token else {}),
-        },
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=15) as response:
-            payload = json.load(response)
-    except urllib.error.HTTPError as exc:
-        raise RuntimeError(
-            f"GitHub Releases API returned HTTP {exc.code} for {repository}"
-        ) from exc
-    except urllib.error.URLError as exc:
-        raise RuntimeError(
-            f"GitHub Releases API request failed for {repository}: {exc.reason}"
-        ) from exc
-    if not isinstance(payload, dict) or not isinstance(payload.get("tag_name"), str):
-        raise RuntimeError(f"Latest release for {repository} omitted tag_name")
-    return payload
 
 
 def compare_versions(
@@ -82,7 +55,8 @@ def main() -> int:
     parser.add_argument(
         "--releases-file",
         type=Path,
-        help="Use deterministic release data instead of the GitHub API",
+        default=Path("samples/upstream-releases.json"),
+        help="Deterministic release catalog used by the demo",
     )
     args = parser.parse_args()
 
@@ -90,14 +64,7 @@ def main() -> int:
     if not isinstance(configuration, dict):
         raise ValueError("Upstream configuration must be a JSON object")
 
-    if args.releases_file:
-        releases = json.loads(args.releases_file.read_text(encoding="utf-8"))
-    else:
-        token = os.getenv("GITHUB_TOKEN")
-        releases = {
-            name: latest_release(settings["repository"], token)
-            for name, settings in configuration.items()
-        }
+    releases = json.loads(args.releases_file.read_text(encoding="utf-8"))
 
     updates = compare_versions(configuration, releases)
     output = {"updates": updates, "update_count": len(updates)}
@@ -115,4 +82,3 @@ if __name__ == "__main__":
     except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         sys.exit(1)
-

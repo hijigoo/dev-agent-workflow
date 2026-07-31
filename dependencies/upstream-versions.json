@@ -1,11 +1,10 @@
 {
-  "dograh": {
-    "repository": "dograh-hq/dograh",
-    "installed_version": "dograh-v1.43.0"
+  "mini-agent-runtime": {
+    "repository": "hijigoo/dev-agent-workflow",
+    "installed_version": "v1.0.0"
   },
-  "pipecat": {
-    "repository": "pipecat-ai/pipecat",
-    "installed_version": "v1.6.0"
+  "mini-pipeline-sdk": {
+    "repository": "hijigoo/dev-agent-workflow",
+    "installed_version": "v1.0.0"
   }
 }
-

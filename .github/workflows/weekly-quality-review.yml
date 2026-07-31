@@ -1,4 +1,4 @@
-name: Weekly quality review
+name: "04 · Monitoring — Weekly Quality Review"
 
 on:
   schedule:
@@ -62,4 +62,3 @@ jobs:
             Validate the aggregate evidence. Create a separate agent-ready implementation
             issue only for an approved improvement. Do not expose raw prompts or transcripts.`
             });
-

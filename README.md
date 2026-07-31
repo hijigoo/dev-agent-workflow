@@ -9,7 +9,7 @@ GitHub Copilot cloud agent를 팀 개발 프로세스에 편입하는 실행 가
 3. GitHub UI/Jira/Slack에서 Copilot cloud agent에 작업 할당
 4. Agent가 코드·테스트·PR 작성
 5. CI, E2E, CodeQL과 독립 reviewer가 변경 검증
-6. Dograh·Pipecat 릴리스 및 품질 저하를 주기적으로 감지해 과업 생성
+6. Mini Agent Runtime·Pipeline의 데모 릴리스와 품질 저하를 감지해 과업 생성
 7. `main` 병합 후 재평가하고 별도 운영 승인 뒤 Azure Container Apps 배포
 
 > Cloud agent는 PR을 자동 승인하거나 병합하지 않습니다. 이 샘플도 모든 자동화의 종착점을 Issue 또는 draft PR로 제한합니다.
@@ -21,7 +21,7 @@ apps/
   api/                  FastAPI 회의실 예약·비식별 품질 지표 API
   work-intake/          Jira webhook·로컬 입력·GitHub Issue 생성 API
   web/                  React 운영 포털과 Work Intake UI
-dependencies/           Dograh·Pipecat 적용 버전 기준
+dependencies/           Mini Agent component 적용 버전과 upgrade simulation
 scripts/                릴리스 감지와 주간 품질 리포트
 tests/                  자동화 스크립트 테스트
 scenarios/              고객 실습용 과업·테스트 시나리오
@@ -35,6 +35,9 @@ docs/                    Azure OIDC와 production 승인 설정 가이드
 고객 발표 자료는 [`cloud-agent-ax-workshop.html`](cloud-agent-ax-workshop.html)입니다.
 Agentic DLC 실습과 평가표는
 [`scenarios/agentic-dlc-scenarios.md`](scenarios/agentic-dlc-scenarios.md)를 사용합니다.
+브라우저의 **Mini Agent** 화면은 별도 model/API key 없이 즉시 실행됩니다. 작은
+runtime·pipeline upgrade 시뮬레이션은
+[`dependencies/README.md`](dependencies/README.md)에서 확인합니다.
 
 ## 빠른 실행
 
@@ -115,7 +118,7 @@ GitHub App for Slack을 설치하고 DM 또는 비민감 thread에서 `@GitHub C
 
 | 요구사항 | 구현 |
 |---|---|
-| Dograh·Pipecat 업그레이드 | `upstream-release-watch.yml` + `scripts/check_upstream_releases.py` |
+| Mini component 업그레이드 | local release catalog + `upstream-release-watch.yml` |
 | 의존성 취약점 | Dependabot security/version updates + regression CI |
 | 코드 취약점 | CodeQL + Security campaign/Copilot 할당 |
 | UI E2E | Playwright trace·HTML report artifact |
@@ -123,6 +126,25 @@ GitHub App for Slack을 설치하고 DM 또는 비민감 thread에서 `@GitHub C
 | 신규 기능 | Issue template + custom agents + required checks |
 | 로그 모니터링 | `weekly-quality-review.yml` + `scripts/build_quality_report.py` |
 | 승인 후 Azure 배포 | `deploy-aca.yml` + Bicep + GitHub `production` Environment |
+
+## GitHub Actions 데모 순서
+
+Actions 화면의 이름은 고객이 실행 순서를 바로 알 수 있도록 번호를 붙였습니다.
+
+| 번호 | Workflow | 데모 목적 | 자동 실행 |
+|---|---|---|---|
+| 00 | Cloud Agent — Reproducible Setup | Cloud Agent 개발 환경 준비 | Agent setup 전용 |
+| 01 | PR Validation — Unit, UI, E2E, Quality | PR 회귀와 artifact | PR, 수동 |
+| 02 | GHAS — CodeQL Security Scan | 코드 취약점 탐지 | PR, `main`, 주기 |
+| 03 | Upgrade Demo — Mini Runtime and Pipeline | local catalog release 감지와 Issue | 매일, 수동 |
+| 04 | Monitoring — Weekly Quality Review | 비식별 품질 저하 리포트 | 매주, 수동 |
+| 05 | Delivery — Evaluate, Approve, Deploy ACA | 병합 후 평가·승인·배포 | `main`, 수동 |
+
+일반 Dependabot version-update schedule은 데모 noise를 줄이기 위해 제거했습니다.
+Dependabot alerts와 security updates는 repository **Security & analysis** 설정에서
+활성화해 신규 취약점에만 사용합니다.
+이 설정을 켜면 GitHub가 관리하는 **Dependabot Updates** 항목이 Actions에 별도로
+보일 수 있으며, 사용자 정의 데모 workflow가 아니라 Security alert 조치 경로입니다.
 
 ## Azure Container Apps 배포
 

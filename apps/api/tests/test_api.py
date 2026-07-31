@@ -34,6 +34,33 @@ def test_health_and_cors(client):
     assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
 
 
+def test_mini_agent_is_deterministic_and_reports_pipeline_versions(client):
+    response = client.post("/agent/respond", json={"message": "How do I reserve a room?"})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "answer": (
+            "Choose a room, provide a timezone-aware start and end time, "
+            "then confirm the reservation."
+        ),
+        "intent": "reservation-help",
+        "confidence": 0.96,
+        "stages": [
+            "normalize",
+            "classify:reservation-help",
+            "respond:reservation-help",
+        ],
+        "runtime_version": "v1.0.0",
+        "pipeline_version": "v1.0.0",
+    }
+    assert client.get("/agent/about").json()["mode"] == "deterministic-local"
+
+
+def test_mini_agent_rejects_empty_or_oversized_messages(client):
+    assert client.post("/agent/respond", json={"message": "  "}).status_code == 422
+    assert client.post("/agent/respond", json={"message": "x" * 501}).status_code == 422
+
+
 def test_seeded_rooms_are_deterministic_and_filterable(client):
     rooms = client.get("/rooms").json()
     assert [room["id"] for room in rooms] == [

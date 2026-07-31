@@ -1,4 +1,4 @@
-name: Evaluate and deploy to Azure Container Apps
+name: "05 · Delivery — Evaluate, Approve, Deploy ACA"
 run-name: Evaluate ${{ github.sha }} and deploy after production approval
 
 on:

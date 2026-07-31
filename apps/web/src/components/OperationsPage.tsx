@@ -10,17 +10,17 @@ const weeklyMetrics = [
 
 const releases = [
   {
-    project: 'Dograh',
-    version: 'v1.8.2',
-    published: '2 days ago',
-    summary: 'Improved session recovery and WebRTC transport stability.',
+    project: 'Mini Agent Runtime',
+    version: 'v1.1.0',
+    published: 'demo catalog',
+    summary: 'Adds a new deterministic intent while preserving the response contract.',
     status: 'Review',
   },
   {
-    project: 'Pipecat',
-    version: 'v0.0.82',
-    published: '5 days ago',
-    summary: 'New speech metrics and interruption handling refinements.',
+    project: 'Mini Pipeline SDK',
+    version: 'v1.0.0',
+    published: 'installed',
+    summary: 'Normalize, classify, and respond stages are at the tracked version.',
     status: 'Ready',
   },
 ]
@@ -66,7 +66,7 @@ export function OperationsPage() {
             <span className="metric-icon success" aria-hidden="true">✓</span>
           </div>
           <div className="score-row"><strong>12/12</strong><span>checks</span></div>
-          <p>Dograh candidate passed staging</p>
+          <p>Mini Runtime candidate passed staging</p>
           <span className="tag success">Ready to promote</span>
         </article>
       </section>

@@ -71,6 +71,65 @@ class QualityMetrics(BaseModel):
     average_duration_minutes: float
 
 
+class AgentRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    message: str = Field(min_length=1, max_length=500)
+
+
+class AgentResponse(BaseModel):
+    answer: str
+    intent: str
+    confidence: float
+    stages: list[str]
+    runtime_version: str
+    pipeline_version: str
+
+
+MINI_AGENT_RUNTIME_VERSION = "v1.0.0"
+MINI_PIPELINE_VERSION = "v1.0.0"
+
+
+def run_mini_agent(message: str) -> AgentResponse:
+    normalized = " ".join(message.lower().split())
+    if any(keyword in normalized for keyword in ("reserve", "reservation", "book")):
+        intent = "reservation-help"
+        confidence = 0.96
+        answer = (
+            "Choose a room, provide a timezone-aware start and end time, "
+            "then confirm the reservation."
+        )
+    elif any(keyword in normalized for keyword in ("room", "meeting", "capacity")):
+        intent = "room-search"
+        confidence = 0.93
+        answer = (
+            "Use capacity and equipment filters to find a room. "
+            "Atlas is the smallest seeded room."
+        )
+    elif any(keyword in normalized for keyword in ("security", "cve", "alert")):
+        intent = "security-triage"
+        confidence = 0.9
+        answer = (
+            "Create an agent-ready security work item, reproduce the alert, "
+            "apply the smallest fix, and run regression checks."
+        )
+    else:
+        intent = "fallback"
+        confidence = 0.55
+        answer = (
+            "I can demonstrate room search, reservation help, or security alert triage."
+        )
+
+    return AgentResponse(
+        answer=answer,
+        intent=intent,
+        confidence=confidence,
+        stages=["normalize", f"classify:{intent}", f"respond:{intent}"],
+        runtime_version=MINI_AGENT_RUNTIME_VERSION,
+        pipeline_version=MINI_PIPELINE_VERSION,
+    )
+
+
 class ReservationRepository:
     def __init__(self, database_path: str) -> None:
         self.database_path = database_path
@@ -340,6 +399,19 @@ def create_app(database_path: str | None = None) -> FastAPI:
     @api.get("/health")
     def health() -> dict[str, str]:
         return {"status": "ok"}
+
+    @api.get("/agent/about")
+    def agent_about() -> dict[str, str]:
+        return {
+            "name": "Mini Agent",
+            "runtime_version": MINI_AGENT_RUNTIME_VERSION,
+            "pipeline_version": MINI_PIPELINE_VERSION,
+            "mode": "deterministic-local",
+        }
+
+    @api.post("/agent/respond", response_model=AgentResponse)
+    def agent_respond(request: AgentRequest) -> AgentResponse:
+        return run_mini_agent(request.message)
 
     @api.get("/rooms", response_model=list[Room])
     def list_rooms(

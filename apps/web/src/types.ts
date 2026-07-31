@@ -24,6 +24,15 @@ export interface Reservation extends ReservationInput {
   created_at: string
 }
 
+export interface AgentResponse {
+  answer: string
+  intent: string
+  confidence: number
+  stages: string[]
+  runtime_version: string
+  pipeline_version: string
+}
+
 export type WorkDestination = 'local' | 'jira'
 
 export interface WorkScenario {

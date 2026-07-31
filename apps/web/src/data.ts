@@ -56,8 +56,8 @@ export const workScenarios: WorkScenario[] = [
     id: 'upstream-release',
     externalKey: 'cloud-agent:upstream-release',
     label: 'Upstream release adoption',
-    description: 'Evaluate and adopt a new Dograh or Pipecat upstream release.',
-    defaultTitle: 'Evaluate upstream release for Cloud Agent',
+    description: 'Evaluate a simulated Mini Agent Runtime or Pipeline release.',
+    defaultTitle: 'Upgrade the Mini Agent Runtime',
     defaultLabels: ['dependencies', 'cloud-agent'],
   },
   {

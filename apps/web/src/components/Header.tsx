@@ -8,6 +8,7 @@ interface HeaderProps {
 const navigation: Array<{ id: Page; label: string }> = [
   { id: 'rooms', label: 'Rooms' },
   { id: 'reservations', label: 'Reservations' },
+  { id: 'agent', label: 'Mini Agent' },
   { id: 'operations', label: 'Cloud Agent Ops' },
   { id: 'intake', label: 'Work Intake' },
 ]

@@ -1,4 +1,4 @@
-name: CodeQL
+name: "02 · GHAS — CodeQL Security Scan"
 
 on:
   push:
@@ -26,4 +26,3 @@ jobs:
         with:
           languages: ${{ matrix.language }}
       - uses: github/codeql-action/analyze@v3
-
