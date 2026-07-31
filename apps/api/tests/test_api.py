@@ -171,6 +171,22 @@ def test_cancellation_releases_interval_and_can_be_filtered(client):
     assert client.delete("/reservations/9999").status_code == 404
 
 
+def test_mini_agent_classifies_korean_room_search(client):
+    response = client.post(
+        "/agent/respond",
+        json={"message": "화상회의가 가능한 10명 회의실을 찾아줘"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["intent"] == "room-search"
+    assert body["confidence"] == 0.93
+    assert body["stages"] == [
+        "normalize",
+        "classify:room-search",
+        "respond:room-search",
+    ]
+
+
 def test_quality_metrics_include_only_aggregates(client):
     created = client.post("/reservations", json=reservation()).json()
     client.post(

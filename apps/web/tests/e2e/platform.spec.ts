@@ -32,3 +32,15 @@ test('runs the deterministic Mini Agent and displays pipeline evidence', async (
   await expect(page.getByText('reservation-help', { exact: true })).toBeVisible()
   await expect(page.getByText('classify:reservation-help')).toBeVisible()
 })
+
+test('classifies Korean room-search request via Mini Agent', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Mini Agent' }).click()
+
+  await page.getByRole('textbox', { name: 'Message' }).fill('화상회의가 가능한 10명 회의실을 찾아줘')
+  await page.getByRole('button', { name: 'Run Mini Agent' }).click()
+
+  await expect(page.getByRole('status')).toContainText('Use capacity and equipment filters')
+  await expect(page.getByText('room-search', { exact: true })).toBeVisible()
+  await expect(page.getByText('classify:room-search')).toBeVisible()
+})

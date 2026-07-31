@@ -28,3 +28,27 @@ it('runs the local mini agent and displays trace evidence', async () => {
   expect(screen.getByText('reservation-help')).toBeVisible()
   expect(screen.getAllByText('v1.0.0')).toHaveLength(2)
 })
+
+it('classifies Korean room-search request and displays room-search intent', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      answer: 'Use capacity and equipment filters to find a room. Atlas is the smallest seeded room.',
+      intent: 'room-search',
+      confidence: 0.93,
+      stages: ['normalize', 'classify:room-search', 'respond:room-search'],
+      runtime_version: 'v1.0.0',
+      pipeline_version: 'v1.0.0',
+    }),
+  }))
+
+  render(<AgentLabPage />)
+  await userEvent.clear(screen.getByRole('textbox', { name: 'Message' }))
+  await userEvent.type(screen.getByRole('textbox', { name: 'Message' }), '화상회의가 가능한 10명 회의실을 찾아줘')
+  await userEvent.click(screen.getByRole('button', { name: 'Run Mini Agent' }))
+
+  expect(await screen.findByText('Use capacity and equipment filters to find a room. Atlas is the smallest seeded room.')).toBeVisible()
+  expect(screen.getByText('room-search')).toBeVisible()
+  expect(screen.getByText(/classify:room-search/)).toBeVisible()
+})
