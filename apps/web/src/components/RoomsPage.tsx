@@ -9,7 +9,15 @@ interface RoomsPageProps {
 }
 
 function formatEquipment(value: string) {
-  return value === 'Video conferencing' ? 'Video' : value
+  if (value === 'Display') return '디스플레이'
+  if (value === 'Whiteboard') return '화이트보드'
+  if (value === 'Video conferencing') return '화상 회의'
+  if (value === 'Phone booth') return '폰 부스'
+  return value
+}
+
+function formatRoomStatus(value: Room['status']) {
+  return value === 'Available' ? '이용 가능' : '제한적'
 }
 
 export function RoomsPage({
@@ -40,16 +48,16 @@ export function RoomsPage({
     <>
       <section className="hero page-shell" aria-labelledby="rooms-title">
         <div>
-          <p className="eyebrow">Workspace · Seoul campus</p>
-          <h1 id="rooms-title">Find the right room, right now.</h1>
+          <p className="eyebrow">업무 공간 · 서울 캠퍼스</p>
+          <h1 id="rooms-title">지금 바로 맞는 회의실을 찾아보세요.</h1>
           <p className="hero-copy">
-            Search live availability, match the equipment you need, and reserve in seconds.
+            실시간 이용 가능 여부를 확인하고 필요한 장비를 맞춰 몇 초 안에 예약하세요.
           </p>
         </div>
-        <div className="availability-summary" aria-label="Room availability summary">
-          <span className="live-indicator"><i aria-hidden="true" /> {demoData ? 'Demo data' : 'Live'}</span>
-          <strong>{rooms.filter((room) => room.status === 'Available').length} rooms</strong>
-          <small>{demoData ? 'Room API is currently offline' : 'available this afternoon'}</small>
+        <div className="availability-summary" aria-label="회의실 이용 가능 요약">
+          <span className="live-indicator"><i aria-hidden="true" /> {demoData ? '데모 데이터' : '실시간'}</span>
+          <strong>{rooms.filter((room) => room.status === 'Available').length}개 회의실</strong>
+          <small>{demoData ? '현재 회의실 API에 연결할 수 없습니다' : '오늘 오후 이용 가능'}</small>
         </div>
       </section>
 
@@ -57,8 +65,8 @@ export function RoomsPage({
         <section className="filter-panel" aria-labelledby="filters-title">
           <div className="section-heading compact">
             <div>
-              <p className="eyebrow">Room finder</p>
-              <h2 id="filters-title">What do you need?</h2>
+              <p className="eyebrow">회의실 찾기</p>
+              <h2 id="filters-title">어떤 조건이 필요하신가요?</h2>
             </div>
             <button
               type="button"
@@ -68,26 +76,26 @@ export function RoomsPage({
                 setEquipment('All')
               }}
             >
-              Reset filters
+              필터 초기화
             </button>
           </div>
           <div className="filters">
             <label>
-              Minimum capacity
+              최소 수용 인원
               <select
-                aria-label="Minimum capacity"
+                aria-label="최소 수용 인원"
                 value={capacity}
                 onChange={(event) => setCapacity(Number(event.target.value))}
               >
-                <option value="1">Any size</option>
-                <option value="4">4+ people</option>
-                <option value="6">6+ people</option>
-                <option value="10">10+ people</option>
-                <option value="16">16+ people</option>
+                <option value="1">모든 규모</option>
+                <option value="4">4인 이상</option>
+                <option value="6">6인 이상</option>
+                <option value="10">10인 이상</option>
+                <option value="16">16인 이상</option>
               </select>
             </label>
             <fieldset>
-              <legend>Equipment</legend>
+              <legend>장비</legend>
               <div className="chip-group">
                 <button
                   type="button"
@@ -95,7 +103,7 @@ export function RoomsPage({
                   aria-pressed={equipment === 'All'}
                   onClick={() => setEquipment('All')}
                 >
-                  All equipment
+                  모든 장비
                 </button>
                 {equipmentOptions.map((item) => (
                   <button
@@ -105,7 +113,7 @@ export function RoomsPage({
                     aria-pressed={equipment === item}
                     onClick={() => setEquipment(item)}
                   >
-                    {item}
+                    {formatEquipment(item)}
                   </button>
                 ))}
               </div>
@@ -116,11 +124,11 @@ export function RoomsPage({
         <section aria-labelledby="results-title">
           <div className="section-heading">
             <div>
-              <p className="eyebrow">{demoData ? 'Clearly labeled sample inventory' : 'Current inventory'}</p>
-              <h2 id="results-title">Available spaces</h2>
+              <p className="eyebrow">{demoData ? '샘플 인벤토리(명확히 표기됨)' : '현재 인벤토리'}</p>
+              <h2 id="results-title">이용 가능한 공간</h2>
             </div>
             <p className="result-count" aria-live="polite">
-              {filteredRooms.length} {filteredRooms.length === 1 ? 'match' : 'matches'}
+              {filteredRooms.length}건 일치
             </p>
           </div>
           {filteredRooms.length > 0 ? (
@@ -129,7 +137,7 @@ export function RoomsPage({
                 <article className="room-card" key={room.id}>
                   <div className="room-visual" aria-hidden="true">
                     <span>{room.capacity}</span>
-                    <small>seats</small>
+                    <small>좌석</small>
                   </div>
                   <div className="room-content">
                     <div className="room-title-row">
@@ -137,10 +145,10 @@ export function RoomsPage({
                         <h3>{room.name}</h3>
                         <p>{room.floor}</p>
                       </div>
-                      <span className={`status ${room.status.toLowerCase()}`}>{room.status}</span>
+                      <span className={`status ${room.status.toLowerCase()}`}>{formatRoomStatus(room.status)}</span>
                     </div>
                     <p className="next-available">{room.nextAvailable}</p>
-                    <ul className="equipment-list" aria-label={`${room.name} equipment`}>
+                    <ul className="equipment-list" aria-label={`${room.name} 장비`}>
                       {room.equipment.map((item) => (
                         <li key={item}>{formatEquipment(item)}</li>
                       ))}
@@ -150,7 +158,7 @@ export function RoomsPage({
                       className="primary-button full-width"
                       onClick={() => setSelectedRoom(room)}
                     >
-                      Reserve {room.name}
+                      {room.name} 예약
                     </button>
                   </div>
                 </article>
@@ -159,8 +167,8 @@ export function RoomsPage({
           ) : (
             <div className="empty-state">
               <span aria-hidden="true">⌕</span>
-              <h3>No rooms match those filters</h3>
-              <p>Try reducing capacity or selecting different equipment.</p>
+              <h3>해당 필터와 일치하는 회의실이 없습니다</h3>
+              <p>수용 인원을 낮추거나 다른 장비를 선택해 보세요.</p>
             </div>
           )}
         </section>
@@ -199,7 +207,7 @@ function ReservationDialog({ room, onClose, onSubmit }: ReservationDialogProps) 
     const duration = Number(form.get('duration'))
 
     if (Number.isNaN(start.getTime())) {
-      setError('Enter a valid reservation date and time.')
+      setError('유효한 예약 날짜와 시간을 입력하세요.')
       return
     }
     const end = new Date(start.getTime() + duration * 60_000)
@@ -214,7 +222,7 @@ function ReservationDialog({ room, onClose, onSubmit }: ReservationDialogProps) 
         end: end.toISOString(),
       })
     } catch {
-      setError('Reservation could not be created. Check the meeting API and try again.')
+      setError('예약을 생성하지 못했습니다. 회의 API를 확인한 뒤 다시 시도하세요.')
     } finally {
       setSubmitting(false)
     }
@@ -231,41 +239,41 @@ function ReservationDialog({ room, onClose, onSubmit }: ReservationDialogProps) 
       >
         <div className="dialog-header">
           <div>
-            <p className="eyebrow">New reservation</p>
-            <h2 id="reservation-title">Reserve {room.name}</h2>
+            <p className="eyebrow">새 예약</p>
+            <h2 id="reservation-title">{room.name} 예약</h2>
           </div>
-          <button className="icon-button" type="button" onClick={onClose} aria-label="Close">
+          <button className="icon-button" type="button" onClick={onClose} aria-label="닫기">
             ×
           </button>
         </div>
-        <p className="dialog-summary">{room.floor} · Up to {room.capacity} people</p>
+        <p className="dialog-summary">{room.floor} · 최대 {room.capacity}명</p>
         <form className="form-grid" onSubmit={handleSubmit}>
           <label className="span-two">
-            Meeting title
-            <input name="title" required placeholder="e.g. Design review" />
+            회의 제목
+            <input name="title" required placeholder="예: 디자인 리뷰" />
           </label>
           <label>
-            Date
+            날짜
             <input name="date" required type="date" min={minDate} defaultValue={minDate} />
           </label>
           <label>
-            Start time
+            시작 시간
             <input name="startTime" required type="time" defaultValue="14:00" />
           </label>
           <label className="span-two">
-            Duration
+            진행 시간
             <select name="duration" defaultValue="60">
-              <option value="30">30 minutes</option>
-              <option value="45">45 minutes</option>
-              <option value="60">1 hour</option>
-              <option value="90">1.5 hours</option>
+              <option value="30">30분</option>
+              <option value="45">45분</option>
+              <option value="60">1시간</option>
+              <option value="90">1시간 30분</option>
             </select>
           </label>
           {error && <p className="form-error span-two" role="alert">{error}</p>}
           <div className="form-actions span-two">
-            <button className="secondary-button" type="button" onClick={onClose}>Cancel</button>
+            <button className="secondary-button" type="button" onClick={onClose}>취소</button>
             <button className="primary-button" type="submit" disabled={submitting}>
-              {submitting ? 'Reserving…' : 'Confirm reservation'}
+              {submitting ? '예약 중…' : '예약 확정'}
             </button>
           </div>
         </form>

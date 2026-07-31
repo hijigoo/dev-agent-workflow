@@ -7,15 +7,15 @@ const responsePayload = {
   work_item: {
     id: 'wi-42',
     external_key: 'cloud-agent:security-alert',
-    title: 'Remediate Cloud Agent security alert',
-    description: 'Triage and remediate a dependency or platform security alert.',
+    title: '클라우드 에이전트 보안 알림 대응',
+    description: '의존성 또는 플랫폼 보안 알림을 분류하고 대응합니다.',
     source: 'jira',
     status: 'open',
     labels: ['security', 'cloud-agent', 'priority:p2'],
     delivery_mode: 'github',
     delivery_status: 'delivered',
     preview_body: {
-      title: 'Remediate Cloud Agent security alert',
+      title: '클라우드 에이전트 보안 알림 대응',
       body: '## Security remediation\n\nInvestigate and patch.',
       labels: ['security', 'cloud-agent', 'priority:p2'],
     },
@@ -41,22 +41,22 @@ describe('WorkIntakePage', () => {
     const user = userEvent.setup()
     render(<WorkIntakePage />)
 
-    await user.click(screen.getByText('Security alert remediation'))
-    await user.click(screen.getByRole('button', { name: 'Jira-like queue' }))
-    await user.click(screen.getByRole('button', { name: 'Generate work item' }))
+    await user.click(screen.getByText('보안 알림 대응'))
+    await user.click(screen.getByRole('button', { name: 'Jira 유사 큐' }))
+    await user.click(screen.getByRole('button', { name: '작업 항목 생성' }))
 
-    expect(await screen.findByRole('status')).toHaveTextContent('created by the intake service')
-    expect(screen.getByRole('heading', { name: 'Remediate Cloud Agent security alert' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('작업 항목을 생성했습니다')
+    expect(screen.getByRole('heading', { name: '클라우드 에이전트 보안 알림 대응' }))
       .toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open generated issue' }))
+    expect(screen.getByRole('link', { name: '생성된 이슈 열기' }))
       .toHaveAttribute('href', responsePayload.work_item.github_issue_url)
 
     const [url, init] = fetchMock.mock.calls[0]
     expect(url).toBe('http://localhost:8001/work-items')
     expect(JSON.parse(init.body)).toEqual({
       external_key: 'cloud-agent:security-alert',
-      title: 'Remediate Cloud Agent security alert',
-      description: 'Triage and remediate a dependency or platform security alert.',
+      title: '클라우드 에이전트 보안 알림 대응',
+      description: '의존성 또는 플랫폼 보안 알림을 분류하고 대응합니다.',
       source: 'jira',
       status: 'open',
       labels: ['security', 'cloud-agent', 'priority:p2'],
@@ -68,10 +68,10 @@ describe('WorkIntakePage', () => {
     const user = userEvent.setup()
     render(<WorkIntakePage />)
 
-    await user.click(screen.getByRole('button', { name: 'Generate work item' }))
+    await user.click(screen.getByRole('button', { name: '작업 항목 생성' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('could not be created')
-    expect(screen.queryByText('Ready')).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Open generated issue' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent('생성하지 못했습니다')
+    expect(screen.queryByText('준비됨')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '생성된 이슈 열기' })).not.toBeInTheDocument()
   })
 })
