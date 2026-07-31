@@ -6,11 +6,13 @@ import { AgentLabPage } from './components/AgentLabPage'
 import { OperationsPage } from './components/OperationsPage'
 import { ReservationsPage } from './components/ReservationsPage'
 import { RoomsPage } from './components/RoomsPage'
+import { useTheme } from './useTheme'
 import type { Reservation, ReservationInput, Room } from './types'
 
 export type Page = 'rooms' | 'reservations' | 'agent' | 'operations'
 
 export default function App() {
+  const [theme, toggleTheme] = useTheme()
   const [page, setPage] = useState<Page>('rooms')
   const [rooms, setRooms] = useState<Room[]>([])
   const [reservations, setReservations] = useState<Reservation[]>([])
@@ -64,7 +66,7 @@ export default function App() {
   return (
     <div className="app">
       <a className="skip-link" href="#main-content">본문으로 건너뛰기</a>
-      <Header activePage={page} onNavigate={setPage} />
+      <Header activePage={page} onNavigate={setPage} theme={theme} onToggleTheme={toggleTheme} />
       <div id="main-content">
         {page === 'rooms' && (
           <RoomsPage
