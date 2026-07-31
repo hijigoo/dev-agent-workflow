@@ -277,7 +277,7 @@ Cloud Agent의 PR 병합과 운영 배포를 분리하고, 병합된 정확한 c
 - OIDC login과 secret 없는 authentication
 - ACR의 commit SHA image tags
 - 외부 Web URL과 internal API ingress 설정
-- `/health`, `/api/health`, `/intake/health` 성공
+- 테스트 앱의 `/health`, `/api/health`와 Work Intake 독립 URL의 `/health` 성공
 
 ### 실패 주입
 

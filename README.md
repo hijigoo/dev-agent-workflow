@@ -19,8 +19,8 @@ GitHub Copilot cloud agent를 팀 개발 프로세스에 편입하는 실행 가
 ```text
 apps/
   api/                  FastAPI 회의실 예약·비식별 품질 지표 API
-  work-intake/          Jira webhook·로컬 입력·GitHub Issue 생성 API
-  web/                  React 운영 포털과 Work Intake UI
+  work-intake/          독립 UI·Jira webhook·GitHub Issue 생성 API
+  web/                  회의실·Mini Agent 테스트 앱
 scripts/                주간 품질 리포트
 tests/                  자동화 스크립트 테스트
 scenarios/              고객 실습용 과업·테스트 시나리오
@@ -48,6 +48,7 @@ docker compose up --build
 
 - Web: <http://localhost:5173>
 - Meeting API docs: <http://localhost:8000/docs>
+- Work Intake: <http://localhost:8001>
 - Work Intake docs: <http://localhost:8001/docs>
 
 기본은 **local preview mode**입니다. Work Intake에서 실제 GitHub Issue를 생성하려면:
@@ -160,8 +161,15 @@ main merge
   → production Environment required reviewer 대기
   → GitHub OIDC 로그인
   → ACR build + Container Apps revision
-  → web/API health check와 URL 보고
+  → 테스트 앱·Work Intake 독립 URL과 health check 보고
 ```
+
+배포 후 공개 URL은 두 개입니다.
+
+- 테스트 앱: `agentworkflow-web` — 회의실·예약·Mini Agent 기능
+- Work Intake: `agentworkflow-work-intake` — 업무 요청·GitHub Issue 생성
+
+`agentworkflow-meeting-api`는 테스트 앱만 호출하는 내부 ACA로 유지합니다.
 
 Azure client secret은 사용하지 않습니다. 실제 subscription·region·resource group과
 required reviewer 구성은

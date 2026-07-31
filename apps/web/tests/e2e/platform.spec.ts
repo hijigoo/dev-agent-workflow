@@ -14,12 +14,12 @@ test('reserves a room through the real meeting API', async ({ page }) => {
 })
 
 test('creates a local GitHub issue preview through Work Intake', async ({ page }) => {
-  await page.goto('/')
-  await page.getByRole('button', { name: 'Work Intake' }).click()
-  await page.getByRole('button', { name: 'Generate work item' }).click()
+  await page.goto('http://127.0.0.1:8001/')
+  await expect(page.getByRole('heading', { name: '개발 요청을 Cloud Agent 작업으로 정리합니다.' })).toBeVisible()
+  await page.getByRole('button', { name: '작업 요청 생성' }).click()
 
-  await expect(page.getByRole('status')).toContainText('created by the intake service')
-  await expect(page.getByText('Preview only — no issue URL delivered')).toBeVisible()
+  await expect(page.getByRole('status')).toContainText('Issue 미리보기가 생성되었습니다')
+  await expect(page.getByText('미리보기 전용')).toBeVisible()
   await expect(page.getByText('External key', { exact: true })).toBeVisible()
 })
 

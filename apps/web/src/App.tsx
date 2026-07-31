@@ -6,10 +6,9 @@ import { AgentLabPage } from './components/AgentLabPage'
 import { OperationsPage } from './components/OperationsPage'
 import { ReservationsPage } from './components/ReservationsPage'
 import { RoomsPage } from './components/RoomsPage'
-import { WorkIntakePage } from './components/WorkIntakePage'
 import type { Reservation, ReservationInput, Room } from './types'
 
-export type Page = 'rooms' | 'reservations' | 'agent' | 'operations' | 'intake'
+export type Page = 'rooms' | 'reservations' | 'agent' | 'operations'
 
 export default function App() {
   const [page, setPage] = useState<Page>('rooms')
@@ -86,7 +85,6 @@ export default function App() {
         )}
         {page === 'operations' && <OperationsPage />}
         {page === 'agent' && <AgentLabPage />}
-        {page === 'intake' && <WorkIntakePage />}
       </div>
       <footer>
         <div className="page-shell">

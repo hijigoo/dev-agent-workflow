@@ -140,7 +140,7 @@ Cloud Agent가 만든 workflow 변경은 사람이 diff를 확인하고 실행 �
 ```bash
 curl --fail "https://<web-fqdn>/health"
 curl --fail "https://<web-fqdn>/api/health"
-curl --fail "https://<web-fqdn>/intake/health"
+curl --fail "https://<work-intake-fqdn>/health"
 ```
 
 브라우저에서 Website URL을 열어 회의실 목록, 예약 생성, Work Intake preview를

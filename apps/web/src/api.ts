@@ -3,13 +3,9 @@ import type {
   AgentResponse,
   Reservation,
   ReservationInput,
-  WorkItemInput,
-  WorkItemResponse,
 } from './types'
 
 export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
-export const WORK_INTAKE_URL =
-  import.meta.env.VITE_WORK_INTAKE_URL ?? 'http://localhost:8001'
 
 async function request<T>(baseUrl: string, path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers)
@@ -56,13 +52,5 @@ export const agentApi = {
     request<AgentResponse>(API_URL, '/agent/respond', {
       method: 'POST',
       body: JSON.stringify({ message }),
-    }),
-}
-
-export const workIntakeApi = {
-  create: (input: WorkItemInput) =>
-    request<WorkItemResponse>(WORK_INTAKE_URL, '/work-items', {
-      method: 'POST',
-      body: JSON.stringify(input),
     }),
 }

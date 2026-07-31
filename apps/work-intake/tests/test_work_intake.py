@@ -26,6 +26,11 @@ def local_client(tmp_path, monkeypatch):
 
 
 def test_local_mode_health_cors_and_preview(local_client):
+    page = local_client.get("/")
+    assert page.status_code == 200
+    assert "개발 요청을 Cloud Agent 작업으로 정리합니다." in page.text
+    assert 'fetch("/work-items"' in page.text
+
     assert local_client.get("/health").json() == {
         "status": "ok",
         "mode": "local",

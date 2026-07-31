@@ -68,7 +68,7 @@ module workIntake './modules/container-app.bicep' = {
     registryLoginServer: registry.properties.loginServer
     image: '${registry.properties.loginServer}/work-intake:${imageTag}'
     targetPort: 8001
-    externalIngress: false
+    externalIngress: true
     minReplicas: 0
     maxReplicas: 2
     environmentVariables: [
@@ -98,15 +98,12 @@ module web './modules/container-app.bicep' = {
         name: 'MEETING_API_ORIGIN'
         value: 'https://${meetingApi.outputs.fqdn}'
       }
-      {
-        name: 'WORK_INTAKE_ORIGIN'
-        value: 'https://${workIntake.outputs.fqdn}'
-      }
     ]
     tags: tags
   }
 }
 
 output webUrl string = 'https://${web.outputs.fqdn}'
+output workIntakeUrl string = 'https://${workIntake.outputs.fqdn}'
 output meetingApiName string = meetingApi.outputs.name
 output workIntakeName string = workIntake.outputs.name

@@ -36,16 +36,12 @@ services:
       context: ./apps/web
       args:
         VITE_API_URL: http://localhost:8000
-        VITE_WORK_INTAKE_URL: http://localhost:8001
     ports:
       - "5173:80"
     environment:
       MEETING_API_ORIGIN: http://meeting-api:8000
-      WORK_INTAKE_ORIGIN: http://work-intake:8001
     depends_on:
       meeting-api:
-        condition: service_healthy
-      work-intake:
         condition: service_healthy
 
 volumes:

@@ -10,7 +10,6 @@ const navigation: Array<{ id: Page; label: string }> = [
   { id: 'reservations', label: 'Reservations' },
   { id: 'agent', label: 'Mini Agent' },
   { id: 'operations', label: 'Cloud Agent Ops' },
-  { id: 'intake', label: 'Work Intake' },
 ]
 
 export function Header({ activePage, onNavigate }: HeaderProps) {

@@ -282,7 +282,7 @@ jobs:
           ENVIRONMENT_NAME: ${{ steps.foundation.outputs.environment_name }}
           IDENTITY_NAME: ${{ steps.foundation.outputs.identity_name }}
         run: |
-          WEB_URL="$(az deployment group create \
+          OUTPUTS="$(az deployment group create \
             --name "apps-${GITHUB_RUN_ID}" \
             --resource-group "$AZURE_RESOURCE_GROUP" \
             --template-file infra/apps.bicep \
@@ -292,12 +292,14 @@ jobs:
               environmentName="$ENVIRONMENT_NAME" \
               pullIdentityName="$IDENTITY_NAME" \
               imageTag="$GITHUB_SHA" \
-            --query properties.outputs.webUrl.value \
-            --output tsv)"
-          echo "web_url=$WEB_URL" >> "$GITHUB_OUTPUT"
-      - name: Verify deployed website and proxied APIs
+            --query properties.outputs \
+            --output json)"
+          echo "web_url=$(jq -r '.webUrl.value' <<<"$OUTPUTS")" >> "$GITHUB_OUTPUT"
+          echo "work_intake_url=$(jq -r '.workIntakeUrl.value' <<<"$OUTPUTS")" >> "$GITHUB_OUTPUT"
+      - name: Verify separated application URLs
         env:
           WEB_URL: ${{ steps.apps.outputs.web_url }}
+          WORK_INTAKE_URL: ${{ steps.apps.outputs.work_intake_url }}
         run: |
           curl --fail --silent --show-error \
             --retry 12 --retry-delay 10 --retry-all-errors \
@@ -307,12 +309,14 @@ jobs:
             "$WEB_URL/api/health"
           curl --fail --silent --show-error \
             --retry 12 --retry-delay 10 --retry-all-errors \
-            "$WEB_URL/intake/health"
+            "$WORK_INTAKE_URL/health"
           curl --fail --silent --show-error "$WEB_URL/" >/dev/null
+          curl --fail --silent --show-error "$WORK_INTAKE_URL/" >/dev/null
           {
             echo "## Azure Container Apps deployment"
             echo
             echo "- Revision: \`${GITHUB_SHA}\`"
-            echo "- Website: $WEB_URL"
+            echo "- Test application: $WEB_URL"
+            echo "- Work Intake: $WORK_INTAKE_URL"
             echo "- Approval environment: \`production\`"
           } >> "$GITHUB_STEP_SUMMARY"

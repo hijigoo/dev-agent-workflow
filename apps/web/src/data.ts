@@ -1,4 +1,4 @@
-import type { ApiRoom, Room, WorkScenario } from './types'
+import type { ApiRoom, Room } from './types'
 
 const roomDisplayMetadata = [
   { floor: '12F · North', status: 'Available' as const, nextAvailable: 'Available all afternoon' },
@@ -48,40 +48,5 @@ export const sampleRooms: Room[] = [
     equipment: ['Phone booth'],
     status: 'Available',
     nextAvailable: 'Demo availability',
-  },
-]
-
-export const workScenarios: WorkScenario[] = [
-  {
-    id: 'security-alert',
-    externalKey: 'cloud-agent:security-alert',
-    label: 'Security alert remediation',
-    description: 'Triage and remediate a dependency or platform security alert.',
-    defaultTitle: 'Remediate Cloud Agent security alert',
-    defaultLabels: ['security', 'cloud-agent'],
-  },
-  {
-    id: 'quality-regression',
-    externalKey: 'cloud-agent:quality-regression',
-    label: 'E2E quality regression',
-    description: 'Investigate a decline in the end-to-end quality score.',
-    defaultTitle: 'Investigate E2E quality regression',
-    defaultLabels: ['quality', 'e2e'],
-  },
-  {
-    id: 'room-incident',
-    externalKey: 'meeting-platform:room-incident',
-    label: 'Meeting room incident',
-    description: 'Resolve a room display, conferencing, or availability issue.',
-    defaultTitle: 'Resolve meeting room service incident',
-    defaultLabels: ['operations', 'meeting-room'],
-  },
-  {
-    id: 'automation-improvement',
-    externalKey: 'cloud-agent:automation-improvement',
-    label: 'Automation improvement',
-    description: 'Propose an improvement to agent-driven operational workflows.',
-    defaultTitle: 'Improve Cloud Agent operations automation',
-    defaultLabels: ['enhancement', 'automation'],
   },
 ]

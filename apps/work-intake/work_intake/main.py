@@ -12,6 +12,7 @@ from typing import Any, Optional
 import httpx
 from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 UTC = timezone.utc
@@ -449,6 +450,10 @@ def create_app(
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @api.get("/", response_class=FileResponse)
+    def index() -> FileResponse:
+        return FileResponse(Path(__file__).parent / "static" / "index.html")
 
     @api.get("/health")
     def health() -> dict[str, str]:
