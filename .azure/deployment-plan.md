@@ -156,6 +156,9 @@ first deployment:
 - Web unit tests: 7 passed
 - Web lint and production build: passed
 - Playwright E2E against both real APIs: 2 passed
+- GitHub-hosted E2E environment regression: explicitly cleared automatic
+  `GITHUB_REPOSITORY`/`GITHUB_TOKEN` for local Work Intake preview; reproduced locally with
+  `GITHUB_REPOSITORY` present and 2 tests passed
 - Bicep: `foundation.bicep` and `apps.bicep` compiled successfully
 - GitHub Actions: all workflow YAML files parsed successfully
 - Workshop: JavaScript syntax and all eight tutorial tab/panel pairs verified

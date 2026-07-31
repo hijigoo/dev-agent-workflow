@@ -26,7 +26,7 @@ export default defineConfig({
     },
     {
       command:
-        'rm -f /tmp/cloud-agent-e2e-intake.sqlite3 && WORK_INTAKE_DATABASE=/tmp/cloud-agent-e2e-intake.sqlite3 python3 -m uvicorn work_intake.main:app --app-dir ../work-intake --host 127.0.0.1 --port 8001',
+        'rm -f /tmp/cloud-agent-e2e-intake.sqlite3 && GITHUB_TOKEN= GITHUB_REPOSITORY= WORK_INTAKE_DATABASE=/tmp/cloud-agent-e2e-intake.sqlite3 python3 -m uvicorn work_intake.main:app --app-dir ../work-intake --host 127.0.0.1 --port 8001',
       url: 'http://127.0.0.1:8001/health',
       reuseExistingServer: !process.env.CI,
     },
