@@ -35,7 +35,7 @@ export default function App() {
       .then(setReservations)
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') return
-        setReservationError('Reservations could not be loaded from the meeting API.')
+        setReservationError('회의 API에서 예약 목록을 불러오지 못했습니다.')
       })
 
     return () => controller.abort()
@@ -47,7 +47,7 @@ export default function App() {
       const created = await reservationsApi.create(input)
       setReservations((current) => [...current, created])
     } catch {
-      setReservationError('Reservation could not be created by the meeting API.')
+      setReservationError('회의 API에서 예약을 생성하지 못했습니다.')
       throw new Error('Reservation creation failed')
     }
   }
@@ -58,13 +58,13 @@ export default function App() {
       await reservationsApi.cancel(id)
       setReservations((current) => current.filter((item) => item.id !== id))
     } catch {
-      setReservationError('Reservation could not be cancelled. It remains on your schedule.')
+      setReservationError('예약을 취소하지 못했습니다. 일정에는 그대로 유지됩니다.')
     }
   }
 
   return (
     <div className="app">
-      <a className="skip-link" href="#main-content">Skip to content</a>
+      <a className="skip-link" href="#main-content">본문으로 건너뛰기</a>
       <Header activePage={page} onNavigate={setPage} />
       <div id="main-content">
         {page === 'rooms' && (
@@ -90,8 +90,8 @@ export default function App() {
       </div>
       <footer>
         <div className="page-shell">
-          <span>Atlas Operations</span>
-          <span>API-ready demo · No credentials stored in the browser</span>
+          <span>아틀라스 운영</span>
+          <span>API 연동 데모 · 브라우저에 자격 증명을 저장하지 않습니다</span>
         </div>
       </footer>
     </div>

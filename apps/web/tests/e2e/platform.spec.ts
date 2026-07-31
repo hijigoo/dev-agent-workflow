@@ -2,31 +2,32 @@ import { expect, test } from '@playwright/test'
 
 test('reserves a room through the real meeting API', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'Find the right room, right now.' })).toBeVisible()
-  await expect(page.getByText('Demo data', { exact: false })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: '지금 바로 맞는 회의실을 찾아보세요.' })).toBeVisible()
+  await expect(page.getByText('데모 데이터', { exact: false })).toHaveCount(0)
 
-  await page.getByRole('button', { name: /Reserve Atlas/ }).click()
-  await page.getByLabel('Meeting title').fill('Cloud Agent review')
-  await page.getByRole('button', { name: 'Confirm reservation' }).click()
+  await page.getByRole('button', { name: /Atlas 예약/ }).click()
+  await page.getByLabel('회의 제목').fill('Cloud Agent review')
+  await page.getByRole('button', { name: '예약 확정' }).click()
 
-  await expect(page.getByRole('heading', { name: 'Reservations' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '예약' })).toBeVisible()
   await expect(page.getByText('Cloud Agent review')).toBeVisible()
 })
 
 test('creates a local GitHub issue preview through Work Intake', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Work Intake' }).click()
-  await page.getByRole('button', { name: 'Generate work item' }).click()
+  await page.getByRole('button', { name: '작업 접수' }).click()
+  await page.getByRole('button', { name: '작업 항목 생성' }).click()
 
-  await expect(page.getByRole('status')).toContainText('created by the intake service')
-  await expect(page.getByText('Preview only — no issue URL delivered')).toBeVisible()
-  await expect(page.getByText('External key', { exact: true })).toBeVisible()
+  await expect(page.getByRole('status')).toContainText('작업 항목을 생성했습니다')
+  await expect(page.getByText('미리보기 전용 — 전달된 이슈 URL이 없습니다')).toBeVisible()
+  await expect(page.getByText('외부 키', { exact: true })).toBeVisible()
 })
 
 test('runs the deterministic Mini Agent and displays pipeline evidence', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Mini Agent' }).click()
-  await page.getByRole('button', { name: 'Run Mini Agent' }).click()
+  await page.getByRole('button', { name: '미니 에이전트' }).click()
+  await page.getByRole('textbox', { name: '메시지' }).fill('How do I reserve a room?')
+  await page.getByRole('button', { name: '미니 에이전트 실행' }).click()
 
   await expect(page.getByRole('status')).toContainText('Choose a room')
   await expect(page.getByText('reservation-help', { exact: true })).toBeVisible()
@@ -35,10 +36,10 @@ test('runs the deterministic Mini Agent and displays pipeline evidence', async (
 
 test('classifies Korean room-search request via Mini Agent', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Mini Agent' }).click()
+  await page.getByRole('button', { name: '미니 에이전트' }).click()
 
-  await page.getByRole('textbox', { name: 'Message' }).fill('화상회의가 가능한 10명 회의실을 찾아줘')
-  await page.getByRole('button', { name: 'Run Mini Agent' }).click()
+  await page.getByRole('textbox', { name: '메시지' }).fill('화상회의가 가능한 10명 회의실을 찾아줘')
+  await page.getByRole('button', { name: '미니 에이전트 실행' }).click()
 
   await expect(page.getByRole('status')).toContainText('Use capacity and equipment filters')
   await expect(page.getByText('room-search', { exact: true })).toBeVisible()

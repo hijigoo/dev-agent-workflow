@@ -22,7 +22,7 @@ it('runs the local mini agent and displays trace evidence', async () => {
   }))
 
   render(<AgentLabPage />)
-  await userEvent.click(screen.getByRole('button', { name: 'Run Mini Agent' }))
+  await userEvent.click(screen.getByRole('button', { name: '미니 에이전트 실행' }))
 
   expect(await screen.findByText('Choose a room and confirm the reservation.')).toBeVisible()
   expect(screen.getByText('reservation-help')).toBeVisible()
@@ -44,9 +44,9 @@ it('classifies Korean room-search request and displays room-search intent', asyn
   }))
 
   render(<AgentLabPage />)
-  await userEvent.clear(screen.getByRole('textbox', { name: 'Message' }))
-  await userEvent.type(screen.getByRole('textbox', { name: 'Message' }), '화상회의가 가능한 10명 회의실을 찾아줘')
-  await userEvent.click(screen.getByRole('button', { name: 'Run Mini Agent' }))
+  await userEvent.clear(screen.getByRole('textbox', { name: '메시지' }))
+  await userEvent.type(screen.getByRole('textbox', { name: '메시지' }), '화상회의가 가능한 10명 회의실을 찾아줘')
+  await userEvent.click(screen.getByRole('button', { name: '미니 에이전트 실행' }))
 
   expect(await screen.findByText('Use capacity and equipment filters to find a room. Atlas is the smallest seeded room.')).toBeVisible()
   expect(screen.getByText('room-search')).toBeVisible()
