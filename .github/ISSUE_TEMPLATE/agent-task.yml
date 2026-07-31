@@ -1,5 +1,5 @@
 name: Cloud Agent 작업 요청
-description: 요청 내용과 완료 조건만 간단히 작성합니다
+description: 요청 내용만 간단히 작성하고 필요한 경우 주의사항을 추가합니다
 title: "[에이전트] "
 labels: ["agent-ready"]
 body:
@@ -9,16 +9,6 @@ body:
       label: 요청 내용
       description: 무엇을 왜 변경해야 하는지 간단히 작성하세요.
       placeholder: 예) 테스트 앱에서 라이트·다크 모드를 직접 전환할 수 있게 해주세요.
-    validations:
-      required: true
-  - type: textarea
-    id: acceptance
-    attributes:
-      label: 완료 조건
-      description: 결과가 완료됐다고 판단할 수 있는 조건을 1~3개 작성하세요.
-      placeholder: |
-        - 헤더 버튼으로 라이트·다크 모드를 전환할 수 있습니다.
-        - 새 동작을 검증하는 테스트가 통과합니다.
     validations:
       required: true
   - type: textarea
