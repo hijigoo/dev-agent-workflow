@@ -12,7 +12,6 @@ const navigation: Array<{ id: Page; label: string }> = [
   { id: 'rooms', label: '회의실' },
   { id: 'reservations', label: '예약' },
   { id: 'agent', label: '미니 에이전트' },
-  { id: 'operations', label: '클라우드 에이전트 운영' },
 ]
 
 export function Header({ activePage, onNavigate, theme, onToggleTheme }: HeaderProps) {

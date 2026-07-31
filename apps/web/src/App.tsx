@@ -3,13 +3,12 @@ import { reservationsApi, roomsApi } from './api'
 import { sampleRooms, toRoomView } from './data'
 import { Header } from './components/Header'
 import { AgentLabPage } from './components/AgentLabPage'
-import { OperationsPage } from './components/OperationsPage'
 import { ReservationsPage } from './components/ReservationsPage'
 import { RoomsPage } from './components/RoomsPage'
 import { useTheme } from './useTheme'
 import type { Reservation, ReservationInput, Room } from './types'
 
-export type Page = 'rooms' | 'reservations' | 'agent' | 'operations'
+export type Page = 'rooms' | 'reservations' | 'agent'
 
 export default function App() {
   const [theme, toggleTheme] = useTheme()
@@ -85,7 +84,6 @@ export default function App() {
             onFindRoom={() => setPage('rooms')}
           />
         )}
-        {page === 'operations' && <OperationsPage />}
         {page === 'agent' && <AgentLabPage />}
       </div>
       <footer>
