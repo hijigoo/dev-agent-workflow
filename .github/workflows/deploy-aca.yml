@@ -1,5 +1,5 @@
 name: "03 · Delivery — Evaluate, Approve, Deploy ACA"
-run-name: Evaluate ${{ github.sha }} and deploy after production approval
+run-name: "03 · Evaluate ${{ github.sha }} and deploy after production approval"
 
 on:
   push:
