@@ -1,68 +1,31 @@
 name: Cloud Agent 작업 요청
-description: GitHub Copilot Cloud Agent가 수행할 범위와 검증 기준을 명확하게 작성합니다
+description: 요청 내용과 완료 조건만 간단히 작성합니다
 title: "[에이전트] "
 labels: ["agent-ready"]
 body:
-  - type: dropdown
-    id: scenario
-    attributes:
-      label: 작업 유형
-      description: 요청하려는 작업과 가장 가까운 유형을 선택하세요.
-      options:
-        - 보안 취약점 수정
-        - E2E·품질 저하 수정
-        - 신규 기능 개발
-        - 주간 품질 개선
-    validations:
-      required: true
   - type: textarea
-    id: context
+    id: request
     attributes:
-      label: 배경 및 현재 동작
-      description: 현재 어떻게 동작하는지, 무엇이 문제인지, 왜 변경이 필요한지 작성하세요.
-      placeholder: 사용자가 겪는 문제와 기대하는 변경을 구체적으로 작성하세요.
+      label: 요청 내용
+      description: 무엇을 왜 변경해야 하는지 간단히 작성하세요.
+      placeholder: 예) 테스트 앱에서 라이트·다크 모드를 직접 전환할 수 있게 해주세요.
     validations:
       required: true
   - type: textarea
     id: acceptance
     attributes:
       label: 완료 조건
-      description: 사람이 결과를 확인하거나 테스트할 수 있는 조건을 체크리스트로 작성하세요.
-      value: |
-        - [ ] 요청한 동작이 구현되었습니다.
-        - [ ] 변경된 동작을 검증하는 회귀 테스트가 포함되었습니다.
-        - [ ] PR에 위험, 미해결 항목, 롤백 방법이 보고되었습니다.
+      description: 결과가 완료됐다고 판단할 수 있는 조건을 1~3개 작성하세요.
+      placeholder: |
+        - 헤더 버튼으로 라이트·다크 모드를 전환할 수 있습니다.
+        - 새 동작을 검증하는 테스트가 통과합니다.
     validations:
       required: true
   - type: textarea
-    id: excluded
+    id: constraints
     attributes:
-      label: 변경 제외 범위
-      description: Agent가 수정하면 안 되는 기능, 파일 또는 동작을 명시하세요.
-      placeholder: 예) 인증 방식과 데이터베이스 스키마는 변경하지 않습니다.
+      label: 주의사항
+      description: 변경하면 안 되는 범위나 꼭 지켜야 할 조건이 있을 때만 작성하세요.
+      placeholder: 예) Azure와 workflow는 변경하지 마세요. 없으면 비워두세요.
     validations:
-      required: true
-  - type: textarea
-    id: validation
-    attributes:
-      label: 필수 검증 명령
-      description: Agent가 완료 전에 실행해야 하는 테스트와 빌드 명령입니다. 필요하면 추가하세요.
-      value: |
-        ```bash
-        python -m pytest apps/api/tests apps/work-intake/tests tests
-        cd apps/web && npm run lint && npm test && npm run build
-        ```
-    validations:
-      required: true
-  - type: checkboxes
-    id: guardrails
-    attributes:
-      label: 안전 확인
-      description: 다음 조건을 모두 확인해야 Cloud Agent 작업으로 등록할 수 있습니다.
-      options:
-        - label: 이 작업에는 운영 Secret이나 고객 원본 데이터가 필요하지 않습니다.
-          required: true
-        - label: 작업 범위가 이 저장소로 한정되며 하나의 Agent 세션에서 완료할 수 있습니다.
-          required: true
-        - label: 작업 책임자와 독립적인 코드 리뷰 담당자가 정해져 있습니다.
-          required: true
+      required: false

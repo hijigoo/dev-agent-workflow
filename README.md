@@ -128,22 +128,25 @@ GitHub App for Slack을 설치하고 DM 또는 비민감 thread에서 `@GitHub C
 
 ## GitHub Actions 데모 순서
 
-Actions 화면의 이름은 고객이 실행 순서를 바로 알 수 있도록 번호를 붙였습니다.
+기본 개발·배포 자동화는 `agentic-delivery.yml` 하나에서 이벤트에 따라 단계를
+나눕니다.
 
-| 번호 | Workflow | 데모 목적 | 자동 실행 |
+| 구간 | Job | 데모 목적 | 실행 시점 |
 |---|---|---|---|
-| 00 | Cloud Agent — Reproducible Setup | Cloud Agent 개발 환경 준비 | Agent setup 전용 |
-| 01 | PR Validation — Unit, UI, E2E, Quality | PR 회귀와 artifact | Ready for review PR, 수동 |
-| 02 | GHAS — CodeQL Security Scan | 코드 취약점 탐지 | Ready for review PR, `main`, 주기 |
-| 03 | Delivery — Evaluate, Approve, Deploy ACA | 평가 후 원본 Issue 알림·승인·배포 | `main`, 수동 |
-| 04 | Optional — Weekly Quality Review | 비식별 품질 저하 리포트 | 수동 |
+| Agent setup | Cloud Agent user-configured setup | Python·Node와 의존성 준비 | Copilot Agent job 내부 |
+| PR 1/3 | Quality validation | Python·React·Playwright·품질 artifact | Ready for review PR |
+| PR 2/3 | CodeQL security | Python·JavaScript/TypeScript 취약점 분석 | PR 1/3 성공 후 |
+| PR 3/3 | Ready to merge | 자동 검증 완료와 사람 리뷰 안내 | PR 2/3 성공 후 |
+| Main 4/5 | Post-merge evaluation | 병합 SHA의 기능·E2E 재평가 | `main` 병합 후 |
+| Main 5/5 | Production approval and ACA deployment | 승인 후 OIDC·ACR·ACA 배포 | 재평가 성공 후 |
 
-00~03은 기본 기능 개발·배포 흐름입니다. 04는 운영 품질 모니터링이 필요할 때만
-수동 실행하는 Optional workflow입니다.
+Copilot이 만든 Draft/WIP PR에서는 통합 workflow의 PR job을 실행하지 않습니다.
+**Ready for review** 전환 후 PR 1/3~3/3을 순서대로 수행하며, 이후 commit이
+추가되면 최신 commit을 다시 검증합니다. CodeQL은 PR 2/3에서 한 번 실행하고
+merge 후에는 다시 실행하지 않습니다.
 
-Copilot이 작업 시작과 함께 만든 Draft/WIP PR에서는 01·02 job을 실행하지 않습니다.
-Agent 작업 완료 후 PR이 **Ready for review**로 전환될 때 검증을 시작하며, 이후
-commit이 추가되면 최신 commit을 다시 검증합니다.
+`weekly-quality-review.yml`은 운영 품질 모니터링이 필요할 때만 사용하는 Optional
+workflow입니다.
 
 일반 Dependabot version-update schedule은 데모 noise를 줄이기 위해 제거했습니다.
 Dependabot alerts와 security updates는 repository **Security & analysis** 설정에서
