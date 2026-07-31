@@ -433,11 +433,11 @@
               <tr><td>03 · 구현</td><td>Draft/WIP PR</td><td>별도 00 run 없이 Agent job 내부 setup 뒤 코드·테스트 작성; 통합 PR job은 Draft에서 Skip</td><td>진행 중 PR을 완료로 오인하지 않음</td><td>Draft PR, diff, 자체 테스트 기록</td></tr>
               <tr><td>04 · 검증</td><td>Ready for review</td><td>한 run에서 PR 1/3 품질 → 2/3 CodeQL → 3/3 병합 준비 순차 실행</td><td>실패 로그를 확인하고 기존 PR에 수정 요청</td><td>최신 commit의 PR 1/3~3/3 Success</td></tr>
               <tr><td>05 · 리뷰</td><td>Review required / Approved</td><td>설정된 경우 Ruleset·CODEOWNERS가 병합 조건 적용</td><td>요청자 기능 확인과 독립 reviewer 승인</td><td>conversation 해결, Approve, 녹색 checks</td></tr>
-              <tr><td>06 · 병합</td><td>PR Merged, 원본 Issue Closed</td><td>main push가 동일한 Agentic Delivery의 Main 4/5 시작</td><td>실제 배포 직전에만 배포 flag를 true로 변경</td><td><code>Closes #이슈번호</code>와 merge SHA</td></tr>
+              <tr><td>06 · 병합</td><td>PR Merged, 원본 Issue Closed</td><td>main push가 동일한 01 · Agentic Delivery의 Main 4/5 시작</td><td>실제 배포 직전에만 배포 flag를 true로 변경</td><td><code>Closes #이슈번호</code>와 merge SHA</td></tr>
               <tr><td>07 · 재평가</td><td>Main 4/5 Post-merge evaluation in progress</td><td>병합 SHA에서 regression·quality artifact 재생성; CodeQL은 재실행하지 않음</td><td>병합 결과의 성공 여부 확인</td><td>Post-merge evaluation Success</td></tr>
               <tr><td>08 · 승인 대기</td><td>Production deployment Waiting</td><td>원본 Issue에 승인 링크 알림; Azure 단계 미실행</td><td>Required reviewer가 <em>Approve and deploy</em> 선택</td><td>Environment approval audit</td></tr>
               <tr><td>09 · PRD 배포</td><td>Production deploy in progress</td><td>OIDC → Bicep foundation → AcrPull → ACR 3 image build → ACA revision</td><td>subscription·resource group·SHA 확인</td><td>세 ACA의 동일 commit SHA image</td></tr>
-              <tr><td>10 · 완료</td><td>Agentic Delivery Success</td><td>Web·Meeting API·Work Intake HTTPS smoke</td><td>기능 확인 후 배포 flag false 복구</td><td>두 외부 URL, health, run·approval·revision 링크</td></tr>
+              <tr><td>10 · 완료</td><td>01 · Agentic Delivery Success</td><td>Web·Meeting API·Work Intake HTTPS smoke</td><td>기능 확인 후 배포 flag false 복구</td><td>두 외부 URL, health, run·approval·revision 링크</td></tr>
             </tbody>
           </table>
         </div>

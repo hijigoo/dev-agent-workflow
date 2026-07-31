@@ -1,5 +1,5 @@
-name: "Agentic Delivery · Validate, Secure, Approve, Deploy"
-run-name: "Agentic Delivery · ${{ github.event_name }} · ${{ github.sha }}"
+name: "01 · Agentic Delivery — Validate, Secure, Approve, Deploy"
+run-name: "01 · Agentic Delivery · ${{ github.event_name }} · ${{ github.sha }}"
 
 on:
   pull_request:

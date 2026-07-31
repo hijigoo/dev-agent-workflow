@@ -131,6 +131,12 @@ GitHub App for Slack을 설치하고 DM 또는 비민감 thread에서 `@GitHub C
 기본 개발·배포 자동화는 `agentic-delivery.yml` 하나에서 이벤트에 따라 단계를
 나눕니다.
 
+| 번호 | Workflow | 역할 |
+|---|---|---|
+| 00 | Cloud Agent — Reproducible Setup | Copilot Agent job 내부 환경 준비 |
+| 01 | Agentic Delivery — Validate, Secure, Approve, Deploy | PR 검증부터 ACA 배포까지 통합 |
+| 02 | Optional — Weekly Quality Review | 선택형 비식별 품질 리포트 |
+
 | 구간 | Job | 데모 목적 | 실행 시점 |
 |---|---|---|---|
 | Agent setup | Cloud Agent user-configured setup | Python·Node와 의존성 준비 | Copilot Agent job 내부 |
@@ -145,7 +151,7 @@ Copilot이 만든 Draft/WIP PR에서는 통합 workflow의 PR job을 실행하�
 추가되면 최신 commit을 다시 검증합니다. CodeQL은 PR 2/3에서 한 번 실행하고
 merge 후에는 다시 실행하지 않습니다.
 
-`weekly-quality-review.yml`은 운영 품질 모니터링이 필요할 때만 사용하는 Optional
+`02 · Optional — Weekly Quality Review`는 운영 품질 모니터링이 필요할 때만 사용하는
 workflow입니다.
 
 일반 Dependabot version-update schedule은 데모 noise를 줄이기 위해 제거했습니다.
