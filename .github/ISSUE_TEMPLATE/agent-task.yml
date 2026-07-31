@@ -1,0 +1,65 @@
+name: Cloud Agent task
+description: Create a bounded, testable task for GitHub Copilot cloud agent
+title: "[Agent] "
+labels: ["agent-ready"]
+body:
+  - type: dropdown
+    id: scenario
+    attributes:
+      label: Scenario
+      options:
+        - Upstream release upgrade
+        - Security remediation
+        - E2E quality regression
+        - New feature
+        - Weekly quality improvement
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Explain the current behavior and why the change is needed.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Use observable, testable checklist items.
+      value: |
+        - [ ] 
+        - [ ] Regression tests cover the changed behavior.
+        - [ ] The PR reports risks, unresolved items, and rollback.
+    validations:
+      required: true
+  - type: textarea
+    id: excluded
+    attributes:
+      label: Excluded scope
+      description: State what the agent must not change.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Required validation
+      value: |
+        ```bash
+        python -m pytest apps/api/tests apps/work-intake/tests tests
+        cd apps/web && npm run lint && npm test && npm run build
+        ```
+    validations:
+      required: true
+  - type: checkboxes
+    id: guardrails
+    attributes:
+      label: Guardrails
+      options:
+        - label: The task does not require production secrets or raw customer data.
+          required: true
+        - label: The task is bounded to one repository and can complete within one agent session.
+          required: true
+        - label: A human owner and independent reviewer are identified.
+          required: true
+

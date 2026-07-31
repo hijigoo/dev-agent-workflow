@@ -1,0 +1,37 @@
+name: Copilot Setup Steps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+      - apps/api/pyproject.toml
+      - apps/work-intake/pyproject.toml
+      - apps/web/package-lock.json
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install Python dependencies
+        run: python -m pip install -e 'apps/api[test]' -e 'apps/work-intake[test]'
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: npm ci
+

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "local-work-intake"
+version = "0.1.0"
+description = "Local-first Jira and GitHub issue intake sample"
+requires-python = ">=3.9"
+dependencies = [
+  "fastapi>=0.110,<1",
+  "httpx>=0.27,<1",
+  "pydantic>=2.6,<3",
+  "uvicorn>=0.29,<1",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<9"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

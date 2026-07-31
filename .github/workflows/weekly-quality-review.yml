@@ -1,0 +1,65 @@
+name: Weekly quality review
+
+on:
+  schedule:
+    - cron: "11 0 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - id: report
+        name: Build privacy-safe report
+        env:
+          QUALITY_METRICS_URL: ${{ vars.QUALITY_METRICS_URL }}
+          QUALITY_METRICS_TOKEN: ${{ secrets.QUALITY_METRICS_TOKEN }}
+        run: |
+          if [ -n "$QUALITY_METRICS_URL" ]; then
+            python scripts/build_quality_report.py --output quality-report.md
+          else
+            python scripts/build_quality_report.py \
+              --input samples/quality-metrics.json \
+              --output quality-report.md
+          fi
+          cat quality-report.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: weekly-quality-report
+          path: quality-report.md
+          retention-days: 30
+      - name: Create regression review issue
+        if: steps.report.outputs.regression_count != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const { owner, repo } = context.repo;
+            const marker = `<!-- quality-review:${new Date().toISOString().slice(0, 10)} -->`;
+            const open = await github.paginate(github.rest.issues.listForRepo, {
+              owner, repo, state: "open", labels: "quality-regression", per_page: 100
+            });
+            if (open.some(issue => issue.body?.includes(marker))) {
+              core.info("This week's review issue already exists");
+              return;
+            }
+            await github.rest.issues.create({
+              owner,
+              repo,
+              title: `[Quality] Weekly regression review ${new Date().toISOString().slice(0, 10)}`,
+              labels: ["quality-regression", "needs-review"],
+              body: `${marker}\n${fs.readFileSync("quality-report.md", "utf8")}
+
+            ## Next step
+            Validate the aggregate evidence. Create a separate agent-ready implementation
+            issue only for an approved improvement. Do not expose raw prompts or transcripts.`
+            });
+

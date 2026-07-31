@@ -1,0 +1,6 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Customer workshop guide
+    url: https://github.com/hijigoo/dev-agent-workflow/blob/main/cloud-agent-ax-workshop.html
+    about: Review the scenarios, tutorial, and human approval gates.
+

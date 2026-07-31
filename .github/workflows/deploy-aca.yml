@@ -1,0 +1,204 @@
+name: Evaluate and deploy to Azure Container Apps
+run-name: Evaluate ${{ github.sha }} and deploy after production approval
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: azure-container-apps-production
+  cancel-in-progress: false
+
+jobs:
+  evaluate:
+    name: Post-merge evaluation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install Python services
+        run: python -m pip install -e 'apps/api[test]' -e 'apps/work-intake[test]'
+      - name: Run Python regression
+        run: python -m pytest apps/api/tests apps/work-intake/tests tests
+      - name: Install web and Chromium dependencies
+        working-directory: apps/web
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Run web lint, unit tests and build
+        working-directory: apps/web
+        run: |
+          npm run lint
+          npm test
+          npm run build
+      - name: Run browser E2E
+        working-directory: apps/web
+        run: npm run test:e2e
+      - name: Build privacy-safe quality scorecard
+        run: |
+          python scripts/build_quality_report.py \
+            --input samples/quality-metrics.json \
+            --output quality-report.md
+          cat quality-report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload evaluation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-merge-evaluation-${{ github.sha }}
+          if-no-files-found: warn
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+            quality-report.md
+          retention-days: 30
+
+  deploy:
+    name: Production approval and ACA deployment
+    needs: evaluate
+    if: vars.ACA_DEPLOYMENT_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      AZURE_NAME_PREFIX: ${{ vars.AZURE_NAME_PREFIX }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate protected deployment configuration
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          test -n "$AZURE_CLIENT_ID"
+          test -n "$AZURE_TENANT_ID"
+          test -n "$AZURE_SUBSCRIPTION_ID"
+          test -n "$AZURE_LOCATION"
+          test -n "$AZURE_RESOURCE_GROUP"
+          test -n "$AZURE_NAME_PREFIX"
+          [[ ${#AZURE_NAME_PREFIX} -ge 3 && ${#AZURE_NAME_PREFIX} -le 18 ]]
+          [[ "$AZURE_NAME_PREFIX" =~ ^[a-z][a-z0-9]*(-[a-z0-9]+)*$ ]]
+      - name: Log in to Azure with GitHub OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Verify resource group and region
+        run: |
+          ACTUAL_LOCATION="$(az group show \
+            --name "$AZURE_RESOURCE_GROUP" \
+            --query location \
+            --output tsv)"
+          test "$ACTUAL_LOCATION" = "$AZURE_LOCATION"
+      - name: Deploy Container Apps foundation
+        id: foundation
+        run: |
+          OUTPUTS="$(az deployment group create \
+            --name "foundation-${GITHUB_RUN_ID}" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --template-file infra/foundation.bicep \
+            --parameters namePrefix="$AZURE_NAME_PREFIX" location="$AZURE_LOCATION" \
+            --query properties.outputs \
+            --output json)"
+          echo "registry_name=$(jq -r '.registryName.value' <<<"$OUTPUTS")" >> "$GITHUB_OUTPUT"
+          echo "environment_name=$(jq -r '.environmentName.value' <<<"$OUTPUTS")" >> "$GITHUB_OUTPUT"
+          echo "identity_name=$(jq -r '.pullIdentityName.value' <<<"$OUTPUTS")" >> "$GITHUB_OUTPUT"
+      - name: Wait for AcrPull role propagation
+        env:
+          REGISTRY_NAME: ${{ steps.foundation.outputs.registry_name }}
+          IDENTITY_NAME: ${{ steps.foundation.outputs.identity_name }}
+        run: |
+          ACR_ID="$(az acr show \
+            --name "$REGISTRY_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query id \
+            --output tsv)"
+          PRINCIPAL_ID="$(az identity show \
+            --name "$IDENTITY_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query principalId \
+            --output tsv)"
+
+          for attempt in 1 2 3 4 5; do
+            ROLE="$(az role assignment list \
+              --scope "$ACR_ID" \
+              --assignee-object-id "$PRINCIPAL_ID" \
+              --query "[?roleDefinitionName=='AcrPull'].roleDefinitionName" \
+              --output tsv 2>/dev/null)"
+            if printf '%s\n' "$ROLE" | grep -qx 'AcrPull'; then
+              echo "AcrPull role confirmed."
+              break
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "::error::AcrPull role did not propagate within five minutes."
+              exit 1
+            fi
+            echo "Waiting for AcrPull role propagation ($attempt/5)..."
+            sleep 60
+          done
+      - name: Build immutable images in ACR
+        env:
+          REGISTRY_NAME: ${{ steps.foundation.outputs.registry_name }}
+        run: |
+          az acr build --registry "$REGISTRY_NAME" --image "meeting-api:${GITHUB_SHA}" apps/api
+          az acr build --registry "$REGISTRY_NAME" --image "work-intake:${GITHUB_SHA}" apps/work-intake
+          az acr build --registry "$REGISTRY_NAME" --image "web:${GITHUB_SHA}" apps/web
+      - name: Deploy Container Apps revision
+        id: apps
+        env:
+          REGISTRY_NAME: ${{ steps.foundation.outputs.registry_name }}
+          ENVIRONMENT_NAME: ${{ steps.foundation.outputs.environment_name }}
+          IDENTITY_NAME: ${{ steps.foundation.outputs.identity_name }}
+        run: |
+          WEB_URL="$(az deployment group create \
+            --name "apps-${GITHUB_RUN_ID}" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --template-file infra/apps.bicep \
+            --parameters \
+              namePrefix="$AZURE_NAME_PREFIX" \
+              registryName="$REGISTRY_NAME" \
+              environmentName="$ENVIRONMENT_NAME" \
+              pullIdentityName="$IDENTITY_NAME" \
+              imageTag="$GITHUB_SHA" \
+            --query properties.outputs.webUrl.value \
+            --output tsv)"
+          echo "web_url=$WEB_URL" >> "$GITHUB_OUTPUT"
+      - name: Verify deployed website and proxied APIs
+        env:
+          WEB_URL: ${{ steps.apps.outputs.web_url }}
+        run: |
+          curl --fail --silent --show-error \
+            --retry 12 --retry-delay 10 --retry-all-errors \
+            "$WEB_URL/health"
+          curl --fail --silent --show-error \
+            --retry 12 --retry-delay 10 --retry-all-errors \
+            "$WEB_URL/api/health"
+          curl --fail --silent --show-error \
+            --retry 12 --retry-delay 10 --retry-all-errors \
+            "$WEB_URL/intake/health"
+          curl --fail --silent --show-error "$WEB_URL/" >/dev/null
+          {
+            echo "## Azure Container Apps deployment"
+            echo
+            echo "- Revision: \`${GITHUB_SHA}\`"
+            echo "- Website: $WEB_URL"
+            echo "- Approval environment: \`production\`"
+          } >> "$GITHUB_STEP_SUMMARY"

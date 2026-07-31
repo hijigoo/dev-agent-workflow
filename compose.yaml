@@ -1,0 +1,53 @@
+services:
+  meeting-api:
+    build:
+      context: ./apps/api
+    environment:
+      MEETING_API_DATABASE: /data/meeting_rooms.sqlite3
+    ports:
+      - "8000:8000"
+    volumes:
+      - meeting-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  work-intake:
+    build:
+      context: ./apps/work-intake
+    environment:
+      WORK_INTAKE_DATABASE: /data/work_items.sqlite3
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GITHUB_REPOSITORY: ${GITHUB_REPOSITORY:-}
+    ports:
+      - "8001:8001"
+    volumes:
+      - intake-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        VITE_API_URL: http://localhost:8000
+        VITE_WORK_INTAKE_URL: http://localhost:8001
+    ports:
+      - "5173:80"
+    environment:
+      MEETING_API_ORIGIN: http://meeting-api:8000
+      WORK_INTAKE_ORIGIN: http://work-intake:8001
+    depends_on:
+      meeting-api:
+        condition: service_healthy
+      work-intake:
+        condition: service_healthy
+
+volumes:
+  meeting-data:
+  intake-data:

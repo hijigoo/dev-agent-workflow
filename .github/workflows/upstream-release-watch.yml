@@ -1,0 +1,68 @@
+name: Watch upstream releases
+
+on:
+  schedule:
+    - cron: "17 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - id: releases
+        name: Compare tracked and latest releases
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/check_upstream_releases.py
+      - name: Create one issue per new release
+        if: steps.releases.outputs.update_count != '0'
+        uses: actions/github-script@v7
+        env:
+          UPDATES: ${{ steps.releases.outputs.updates }}
+        with:
+          script: |
+            const updates = JSON.parse(process.env.UPDATES);
+            const { owner, repo } = context.repo;
+            for (const update of updates) {
+              const marker = `<!-- upstream:${update.dependency}:${update.latest_version} -->`;
+              const open = await github.paginate(github.rest.issues.listForRepo, {
+                owner, repo, state: "open", labels: "upstream-update", per_page: 100
+              });
+              if (open.some(issue => issue.body?.includes(marker))) {
+                core.info(`Issue already exists for ${update.dependency} ${update.latest_version}`);
+                continue;
+              }
+              await github.rest.issues.create({
+                owner,
+                repo,
+                title: `[Upgrade] ${update.dependency} ${update.latest_version}`,
+                labels: ["upstream-update", "agent-ready"],
+                body: `${marker}
+            ## Detected release
+            - Dependency: \`${update.dependency}\`
+            - Repository: \`${update.repository}\`
+            - Installed: \`${update.installed_version}\`
+            - Latest: \`${update.latest_version}\`
+            - Release: ${update.release_url}
+            - Published: \`${update.published_at || "unknown"}\`
+
+            ## Agent task
+            Analyze release notes and migration guidance, update the platform integration,
+            run unit/integration/UI E2E regression, and create a draft PR.
+
+            ## Required report
+            Breaking changes, compatibility risk, test evidence, unresolved items, and rollback.
+
+            ## Human gate
+            Do not auto-merge. A platform owner and an independent reviewer must approve.`
+              });
+            }
+
