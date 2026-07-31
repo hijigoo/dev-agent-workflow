@@ -175,9 +175,10 @@ Repository administrators must create a `production` Environment:
 2. Disable administrator bypass if policy requires it.
 3. Add Azure OIDC Environment secrets and deployment variables.
 4. Configure the Azure federated credential subject as:
-   `repo:hijigoo/dev-agent-workflow:environment:production`.
+   `repo:hijigoo@1788481/dev-agent-workflow@1317968479:environment:production`.
 
 The deployment job cannot obtain Environment secrets or an Azure OIDC token before approval.
+The immutable owner/repository IDs are taken from GitHub's repository OIDC customization API.
 
 ## Validation checklist
 

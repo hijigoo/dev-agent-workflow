@@ -61,7 +61,7 @@ az role assignment create \
 {
   "name": "github-production",
   "issuer": "https://token.actions.githubusercontent.com",
-  "subject": "repo:hijigoo/dev-agent-workflow:environment:production",
+  "subject": "repo:hijigoo@1788481/dev-agent-workflow@1317968479:environment:production",
   "description": "Deploy approved revisions from the production environment",
   "audiences": ["api://AzureADTokenExchange"]
 }
@@ -77,8 +77,16 @@ printf 'Client ID: %s\nTenant ID: %s\nSubscription ID: %s\n' \
   "$APP_ID" "$TENANT_ID" "$SUBSCRIPTION_ID"
 ```
 
-Branch subject가 아니라 Environment subject를 사용해야 승인 게이트와 OIDC 신뢰가
-같은 경계를 공유합니다.
+이 저장소의 GitHub OIDC subject prefix는 다음 명령으로 확인합니다.
+
+```bash
+gh api repos/hijigoo/dev-agent-workflow/actions/oidc/customization/sub
+```
+
+GitHub가 반환하는 immutable owner/repository ID prefix 뒤에
+`:environment:production`을 붙입니다. 이름 기반 branch subject가 아니라 이 Environment
+subject를 사용해야 저장소 rename에도 안전하고 승인 게이트와 OIDC 신뢰가 같은 경계를
+공유합니다.
 
 ## 4. GitHub production Environment
 
