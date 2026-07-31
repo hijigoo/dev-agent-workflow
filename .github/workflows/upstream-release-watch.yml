@@ -24,7 +24,7 @@ jobs:
         run: python scripts/check_upstream_releases.py
       - name: Create one issue per new release
         if: steps.releases.outputs.update_count != '0'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           UPDATES: ${{ steps.releases.outputs.updates }}
         with:
