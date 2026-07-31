@@ -112,5 +112,30 @@ class DeliveryWorkflowTests(unittest.TestCase):
         self.assertIn("needs: [evaluate, notify-approval]", workflow)
 
 
+class PullRequestWorkflowTests(unittest.TestCase):
+    def test_validation_waits_until_pull_request_is_ready(self):
+        workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("ready_for_review", workflow)
+        self.assertEqual(
+            workflow.count("github.event.pull_request.draft == false"),
+            3,
+        )
+
+    def test_codeql_waits_until_pull_request_is_ready(self):
+        workflow = (ROOT / ".github" / "workflows" / "codeql.yml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("ready_for_review", workflow)
+        self.assertIn(
+            "github.event_name != 'pull_request' || "
+            "github.event.pull_request.draft == false",
+            workflow,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -869,7 +869,7 @@
               </div>
               <div class="seq-row">
                 <span class="seq-index">05</span>
-                <div class="message c4-5"><span>01 PR Validation · 02 CodeQL 요청</span></div>
+                <div class="message c3-5"><span>코드·테스트 완료 · Ready for review → 01·02 요청</span></div>
               </div>
               <div class="seq-row">
                 <span class="seq-index">06</span>
@@ -1057,15 +1057,16 @@
             <article class="test-step">
               <span class="test-step-index">03</span>
               <div>
-                <h4>Cloud Agent의 draft PR을 확인합니다</h4>
-                <p>Agent가 조사·코드 변경·테스트를 완료하면 draft PR에 변경 범위와 검증 결과를 보고합니다.</p>
+                <h4>Cloud Agent의 Draft/WIP 진행 상황을 확인합니다</h4>
+                <p>Agent는 작업 시작과 함께 Draft PR을 만들고 코드를 계속 추가합니다. 코드 생성과 자체 테스트가 끝나면 <strong>Ready for review</strong>로 전환합니다.</p>
                 <span class="ui-path">Issue timeline → Connected pull request → Files changed</span>
                 <ul>
                   <li>Issue 인수 조건과 실제 변경 파일이 일치하는지 확인합니다.</li>
                   <li>제외 범위 밖 dependency·workflow 변경이 없는지 확인합니다.</li>
-                  <li>PR이 draft 상태인지 확인합니다.</li>
+                  <li><strong>Draft/WIP:</strong> Agent가 아직 작업 중이며 01·02 job은 실행되지 않습니다.</li>
+                  <li><strong>Ready for review:</strong> Agent 작업이 끝나고 사람 검토와 자동 검증을 시작합니다.</li>
                 </ul>
-                <span class="step-result">기대 결과 · Agent 작성 commit, test, rollback 설명이 있는 draft PR</span>
+                <span class="step-result">기대 결과 · [WIP] 제거와 Ready for review 전환</span>
               </div>
             </article>
 
@@ -1073,7 +1074,7 @@
               <span class="test-step-index">04</span>
               <div>
                 <h4>01과 02 검증을 실행합니다</h4>
-                <p>Copilot이 만든 commit은 repository owner의 workflow 실행 승인이 필요할 수 있습니다.</p>
+                <p>PR이 Ready for review가 되면 01·02가 자동 실행됩니다. Draft 상태의 workflow run은 job이 Skipped로 표시됩니다.</p>
                 <span class="ui-path">Pull request → Checks → Approve and run workflows 또는 Re-run all jobs</span>
                 <ul>
                   <li><strong>01:</strong> Python, React lint/unit/build, Playwright E2E, quality artifact</li>
@@ -1296,7 +1297,7 @@ npm run test:e2e</pre>
               <div class="demo-step"><div><h4>목표와 역할 분리 · 5분</h4><p>Agent를 개인 도구가 아닌 비동기 팀원으로 정의합니다.</p></div></div>
               <div class="demo-step"><div><h4>Mini Agent 앱 · 5분</h4><p>외부 key 없이 intent, answer, pipeline trace를 실행합니다.</p></div></div>
               <div class="demo-step"><div><h4>Issue → Cloud Agent · 10분</h4><p>한국어 회의실 검색 과업, Copilot assignee, session log를 확인합니다.</p></div></div>
-              <div class="demo-step"><div><h4>Draft PR와 검증 · 10분</h4><p>Agent diff, 01/02 checks, E2E artifact와 리뷰 feedback을 봅니다.</p></div></div>
+              <div class="demo-step"><div><h4>Draft 진행 → Ready 검증 · 10분</h4><p>Draft에서는 Agent 진행 상황을 보고, Ready for review 이후 01/02 checks와 E2E artifact를 확인합니다.</p></div></div>
               <div class="demo-step"><div><h4>운영 자동 과업 · 10분</h4><p>04 quality와 GHAS remediation의 공통 패턴을 설명합니다.</p></div></div>
               <div class="demo-step"><div><h4>승인형 ACA 배포 · 5분</h4><p>평가 성공, production 승인 대기, live health evidence를 확인합니다.</p></div></div>
             </div>
@@ -1320,7 +1321,7 @@ npm run test:e2e</pre>
             </div>
             <div class="callout">
               <strong>시연 종료 상태</strong>
-              Draft PR은 사람의 리뷰·merge를 위해 남기고, <span class="mono">ACA_DEPLOYMENT_ENABLED=false</span>로
+              Ready for review PR은 사람의 리뷰·merge를 위해 남기고, <span class="mono">ACA_DEPLOYMENT_ENABLED=false</span>로
               되돌려 불필요한 자동 배포를 방지합니다.
             </div>
           </article>

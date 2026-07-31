@@ -132,13 +132,17 @@ Actions 화면의 이름은 고객이 실행 순서를 바로 알 수 있도록 
 | 번호 | Workflow | 데모 목적 | 자동 실행 |
 |---|---|---|---|
 | 00 | Cloud Agent — Reproducible Setup | Cloud Agent 개발 환경 준비 | Agent setup 전용 |
-| 01 | PR Validation — Unit, UI, E2E, Quality | PR 회귀와 artifact | PR, 수동 |
-| 02 | GHAS — CodeQL Security Scan | 코드 취약점 탐지 | PR, `main`, 주기 |
+| 01 | PR Validation — Unit, UI, E2E, Quality | PR 회귀와 artifact | Ready for review PR, 수동 |
+| 02 | GHAS — CodeQL Security Scan | 코드 취약점 탐지 | Ready for review PR, `main`, 주기 |
 | 03 | Delivery — Evaluate, Approve, Deploy ACA | 평가 후 원본 Issue 알림·승인·배포 | `main`, 수동 |
 | 04 | Optional — Weekly Quality Review | 비식별 품질 저하 리포트 | 수동 |
 
 00~03은 기본 기능 개발·배포 흐름입니다. 04는 운영 품질 모니터링이 필요할 때만
 수동 실행하는 Optional workflow입니다.
+
+Copilot이 작업 시작과 함께 만든 Draft/WIP PR에서는 01·02 job을 실행하지 않습니다.
+Agent 작업 완료 후 PR이 **Ready for review**로 전환될 때 검증을 시작하며, 이후
+commit이 추가되면 최신 commit을 다시 검증합니다.
 
 일반 Dependabot version-update schedule은 데모 noise를 줄이기 위해 제거했습니다.
 Dependabot alerts와 security updates는 repository **Security & analysis** 설정에서

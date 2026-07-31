@@ -2,6 +2,7 @@ name: "01 · PR Validation — Unit, UI, E2E, Quality"
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
@@ -10,6 +11,7 @@ permissions:
 jobs:
   python:
     name: Python tests
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -24,6 +26,7 @@ jobs:
 
   web:
     name: Web lint, tests and build
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -42,6 +45,7 @@ jobs:
 
   browser-and-quality:
     name: Browser E2E and quality evidence
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
