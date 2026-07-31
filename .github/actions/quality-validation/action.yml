@@ -1,0 +1,64 @@
+name: Quality validation
+description: Run Python, web, browser, and privacy-safe quality checks.
+
+inputs:
+  artifact-name:
+    description: Name of the uploaded evaluation artifact.
+    required: true
+  retention-days:
+    description: Number of days to retain the evaluation artifact.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v7
+      with:
+        python-version: "3.12"
+        cache: pip
+    - uses: actions/setup-node@v7
+      with:
+        node-version: "22"
+        cache: npm
+        cache-dependency-path: apps/web/package-lock.json
+    - name: Install Python services
+      shell: bash
+      run: python -m pip install -e 'apps/api[test]' -e 'apps/work-intake[test]'
+    - name: Run Python regression
+      shell: bash
+      run: python -m pytest apps/api/tests apps/work-intake/tests tests
+    - name: Install web and Chromium dependencies
+      shell: bash
+      working-directory: apps/web
+      run: |
+        npm ci
+        npx playwright install --with-deps chromium
+    - name: Run web lint, unit tests and build
+      shell: bash
+      working-directory: apps/web
+      run: |
+        npm run lint
+        npm test
+        npm run build
+    - name: Run browser E2E
+      shell: bash
+      working-directory: apps/web
+      run: npm run test:e2e
+    - name: 비식별 한글 품질 리포트 생성
+      shell: bash
+      run: |
+        python scripts/build_quality_report.py \
+          --input samples/quality-metrics.json \
+          --output quality-report.md
+        cat quality-report.md >> "$GITHUB_STEP_SUMMARY"
+    - name: Upload evaluation evidence
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.artifact-name }}
+        if-no-files-found: warn
+        path: |
+          apps/web/playwright-report/
+          apps/web/test-results/
+          quality-report.md
+        retention-days: ${{ inputs.retention-days }}

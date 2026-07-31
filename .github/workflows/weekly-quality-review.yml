@@ -1,15 +1,36 @@
-name: "02 · Optional — Weekly Quality Review"
+name: "03 · Optional — Scheduled Security and Quality Review"
 
 on:
+  schedule:
+    - cron: "43 17 * * 2"
   workflow_dispatch:
 
 permissions:
   contents: read
-  issues: write
 
 jobs:
-  report:
+  codeql:
+    name: Scheduled CodeQL security
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: python,javascript-typescript
+      - uses: github/codeql-action/analyze@v4
+
+  report:
+    name: Manual privacy-safe quality review
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7

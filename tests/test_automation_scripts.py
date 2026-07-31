@@ -98,9 +98,9 @@ class QualityReportTests(unittest.TestCase):
 
 class DeliveryWorkflowTests(unittest.TestCase):
     def test_delivery_notifies_closing_issue_before_deployment(self):
-        workflow = (ROOT / ".github" / "workflows" / "agentic-delivery.yml").read_text(
-            encoding="utf-8"
-        )
+        workflow = (
+            ROOT / ".github" / "workflows" / "production-deployment.yml"
+        ).read_text(encoding="utf-8")
 
         self.assertIn("notify-approval:", workflow)
         self.assertIn(
@@ -110,28 +110,56 @@ class DeliveryWorkflowTests(unittest.TestCase):
         self.assertIn("github.rest.issues.createComment", workflow)
         self.assertIn("<!-- aca-deployment-approval:", workflow)
         self.assertIn("needs: [evaluate, notify-approval]", workflow)
+        self.assertIn("if: github.ref == 'refs/heads/main'", workflow)
 
 
 class PullRequestWorkflowTests(unittest.TestCase):
-    def test_unified_validation_waits_until_pull_request_is_ready(self):
-        workflow = (ROOT / ".github" / "workflows" / "agentic-delivery.yml").read_text(
-            encoding="utf-8"
-        )
+    def test_validation_waits_until_pull_request_is_ready(self):
+        workflow = (
+            ROOT / ".github" / "workflows" / "pr-validation.yml"
+        ).read_text(encoding="utf-8")
 
         self.assertIn("ready_for_review", workflow)
         self.assertEqual(workflow.count("github.event.pull_request.draft == false"), 1)
-        self.assertIn("needs: pr-quality", workflow)
-        self.assertIn("needs: [pr-quality, pr-security]", workflow)
+        self.assertIn("needs: quality", workflow)
+        self.assertIn('name: "PR 1/2 · Quality validation"', workflow)
+        self.assertIn('name: "PR 2/2 · CodeQL security"', workflow)
+        self.assertNotIn("push:", workflow)
 
     def test_codeql_runs_for_pr_and_schedule_but_not_after_merge(self):
-        workflow = (ROOT / ".github" / "workflows" / "agentic-delivery.yml").read_text(
+        pr = (ROOT / ".github" / "workflows" / "pr-validation.yml").read_text(
             encoding="utf-8"
         )
+        deployment = (
+            ROOT / ".github" / "workflows" / "production-deployment.yml"
+        ).read_text(encoding="utf-8")
+        optional = (
+            ROOT / ".github" / "workflows" / "weekly-quality-review.yml"
+        ).read_text(encoding="utf-8")
 
-        self.assertIn("pr-security:", workflow)
-        self.assertIn("scheduled-security:", workflow)
-        self.assertEqual(workflow.count("github/codeql-action/init@v4"), 2)
-        self.assertNotIn("post-merge-security:", workflow)
+        self.assertIn("security:", pr)
+        self.assertEqual(pr.count("github/codeql-action/init@v4"), 1)
+        self.assertNotIn("github/codeql-action/init@v4", deployment)
+        self.assertIn("Scheduled CodeQL security", optional)
+        self.assertEqual(optional.count("github/codeql-action/init@v4"), 1)
+
+    def test_quality_validation_is_reused_for_pr_and_main(self):
+        pr = (ROOT / ".github" / "workflows" / "pr-validation.yml").read_text(
+            encoding="utf-8"
+        )
+        deployment = (
+            ROOT / ".github" / "workflows" / "production-deployment.yml"
+        ).read_text(encoding="utf-8")
+        action = (
+            ROOT / ".github" / "actions" / "quality-validation" / "action.yml"
+        ).read_text(encoding="utf-8")
+
+        self.assertEqual(pr.count("uses: ./.github/actions/quality-validation"), 1)
+        self.assertEqual(
+            deployment.count("uses: ./.github/actions/quality-validation"), 1
+        )
+        self.assertIn("python -m pytest", action)
+        self.assertIn("npm run test:e2e", action)
 
 
 if __name__ == "__main__":

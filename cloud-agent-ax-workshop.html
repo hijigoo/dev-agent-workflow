@@ -415,9 +415,9 @@
           <div class="flow-step"><small>01</small><strong>Issue 생성</strong><span>Work Intake 또는 Cloud Agent task</span></div>
           <div class="flow-step"><small>02</small><strong>Copilot 할당</strong><span>session·branch·Agent job 내부 setup</span></div>
           <div class="flow-step"><small>03</small><strong>Draft PR</strong><span>Agent 구현·자체 테스트 진행 중</span></div>
-          <div class="flow-step"><small>04</small><strong>Ready</strong><span>통합 PR 1/3 Quality·2/3 CodeQL·3/3 Ready</span></div>
+          <div class="flow-step"><small>04</small><strong>Ready</strong><span>01 PR 1/2 Quality·2/2 CodeQL</span></div>
           <div class="flow-step"><small>05</small><strong>사람 리뷰</strong><span>기능 확인·독립 코드 승인</span></div>
-          <div class="flow-step"><small>06</small><strong>main 병합</strong><span>Closes Issue·통합 Main 4/5 시작</span></div>
+          <div class="flow-step"><small>06</small><strong>main 병합</strong><span>Closes Issue·02 Main 1/3 시작</span></div>
           <div class="flow-step"><small>07</small><strong>병합 재평가</strong><span>병합 SHA에서 전체 regression</span></div>
           <div class="flow-step"><small>08</small><strong>승인 대기</strong><span>production Waiting·Azure 변경 없음</span></div>
           <div class="flow-step"><small>09</small><strong>ACA 배포</strong><span>OIDC·ACR build·Bicep revision</span></div>
@@ -427,22 +427,22 @@
           <table>
             <thead><tr><th>단계</th><th>GitHub 화면 상태</th><th>자동 실행</th><th>사람의 결정</th><th>완료 증거</th></tr></thead>
             <tbody>
-              <tr><td>00 · 생성 전</td><td>기본 branch의 template·workflow·Environment 준비</td><td><code>copilot-setup-steps.yml</code>, 통합 <code>agentic-delivery.yml</code> 대기</td><td>인수 조건·제외 범위·reviewer·OIDC 확인</td><td>baseline 성공, <code>ACA_DEPLOYMENT_ENABLED=false</code></td></tr>
+              <tr><td>00 · 생성 전</td><td>기본 branch의 template·workflow·Environment 준비</td><td><code>copilot-setup-steps.yml</code>, <code>pr-validation.yml</code>, <code>production-deployment.yml</code> 대기</td><td>인수 조건·제외 범위·reviewer·OIDC 확인</td><td>baseline 성공, <code>ACA_DEPLOYMENT_ENABLED=false</code></td></tr>
               <tr><td>01 · Issue</td><td>Open Issue와 <code>agent-ready</code> label</td><td>GitHub 모드 Work Intake는 Issue 발행, local 모드는 동일 본문 preview</td><td>한 session 크기로 범위와 테스트를 확정</td><td>Issue 번호와 추적 가능한 완료 조건</td></tr>
               <tr><td>02 · 할당</td><td>Assignee: Copilot, Agent session 연결</td><td>격리 branch를 만들고 setup 파일을 <em>Running Copilot cloud agent</em> 내부에서 실행</td><td>대상 repo와 전달 컨텍스트 확인</td><td><code>copilot/*</code> branch, session log</td></tr>
-              <tr><td>03 · 구현</td><td>Draft/WIP PR</td><td>별도 00 run 없이 Agent job 내부 setup 뒤 코드·테스트 작성; 통합 PR job은 Draft에서 Skip</td><td>진행 중 PR을 완료로 오인하지 않음</td><td>Draft PR, diff, 자체 테스트 기록</td></tr>
-              <tr><td>04 · 검증</td><td>Ready for review</td><td>한 run에서 PR 1/3 품질 → 2/3 CodeQL → 3/3 병합 준비 순차 실행</td><td>실패 로그를 확인하고 기존 PR에 수정 요청</td><td>최신 commit의 PR 1/3~3/3 Success</td></tr>
+              <tr><td>03 · 구현</td><td>Draft/WIP PR</td><td>별도 00 run 없이 Agent job 내부 setup 뒤 코드·테스트 작성; PR Validation job은 Draft에서 Skip</td><td>진행 중 PR을 완료로 오인하지 않음</td><td>Draft PR, diff, 자체 테스트 기록</td></tr>
+              <tr><td>04 · 검증</td><td>Ready for review</td><td><code>01 · PR Validation</code>에서 PR 1/2 품질 → 2/2 CodeQL 순차 실행</td><td>실패 로그를 확인하고 기존 PR에 수정 요청</td><td>최신 commit의 PR 1/2~2/2 Success</td></tr>
               <tr><td>05 · 리뷰</td><td>Review required / Approved</td><td>설정된 경우 Ruleset·CODEOWNERS가 병합 조건 적용</td><td>요청자 기능 확인과 독립 reviewer 승인</td><td>conversation 해결, Approve, 녹색 checks</td></tr>
-              <tr><td>06 · 병합</td><td>PR Merged, 원본 Issue Closed</td><td>main push가 동일한 01 · Agentic Delivery의 Main 4/5 시작</td><td>실제 배포 직전에만 배포 flag를 true로 변경</td><td><code>Closes #이슈번호</code>와 merge SHA</td></tr>
-              <tr><td>07 · 재평가</td><td>Main 4/5 Post-merge evaluation in progress</td><td>병합 SHA에서 regression·quality artifact 재생성; CodeQL은 재실행하지 않음</td><td>병합 결과의 성공 여부 확인</td><td>Post-merge evaluation Success</td></tr>
+              <tr><td>06 · 병합</td><td>PR Merged, 원본 Issue Closed</td><td>main push가 별도 <code>02 · Production Deployment</code>의 Main 1/3 시작</td><td>실제 배포 직전에만 배포 flag를 true로 변경</td><td><code>Closes #이슈번호</code>와 merge SHA</td></tr>
+              <tr><td>07 · 재평가</td><td>Main 1/3 Post-merge evaluation in progress</td><td>병합 SHA에서 regression·quality artifact 재생성; CodeQL은 재실행하지 않음</td><td>병합 결과의 성공 여부 확인</td><td>Post-merge evaluation Success</td></tr>
               <tr><td>08 · 승인 대기</td><td>Production deployment Waiting</td><td>원본 Issue에 승인 링크 알림; Azure 단계 미실행</td><td>Required reviewer가 <em>Approve and deploy</em> 선택</td><td>Environment approval audit</td></tr>
               <tr><td>09 · PRD 배포</td><td>Production deploy in progress</td><td>OIDC → Bicep foundation → AcrPull → ACR 3 image build → ACA revision</td><td>subscription·resource group·SHA 확인</td><td>세 ACA의 동일 commit SHA image</td></tr>
-              <tr><td>10 · 완료</td><td>01 · Agentic Delivery Success</td><td>Web·Meeting API·Work Intake HTTPS smoke</td><td>기능 확인 후 배포 flag false 복구</td><td>두 외부 URL, health, run·approval·revision 링크</td></tr>
+              <tr><td>10 · 완료</td><td>02 · Production Deployment Success</td><td>Web·Meeting API·Work Intake HTTPS smoke</td><td>기능 확인 후 배포 flag false 복구</td><td>두 외부 URL, health, run·approval·revision 링크</td></tr>
             </tbody>
           </table>
         </div>
         <div class="callout success" style="margin-top:16px"><div><h3>두 개의 승인 지점</h3><p><strong>PR 승인</strong>은 코드를 main에 병합해도 되는지 결정하고, <strong>production Environment 승인</strong>은 검증된 main SHA를 Azure에 배포해도 되는지 다시 결정합니다. 승인 대기 중에는 Azure login과 리소스 변경이 시작되지 않습니다.</p></div></div>
-        <div class="callout" style="margin-top:16px"><div><h3>현재 데모 저장소의 주의점</h3><p>branch ruleset이 없으면 PR 1/3~3/3 실패가 병합을 기술적으로 차단하지 않습니다. 시연에서는 녹색 checks와 독립 승인을 수동 조건으로 지키고, 실제 도입 시 required checks·최소 승인 수·미해결 conversation 차단을 ruleset으로 강제합니다.</p></div></div>
+        <div class="callout" style="margin-top:16px"><div><h3>현재 데모 저장소의 주의점</h3><p>branch ruleset이 없으면 PR 1/2~2/2 실패가 병합을 기술적으로 차단하지 않습니다. 시연에서는 녹색 checks와 독립 승인을 수동 조건으로 지키고, 실제 도입 시 required checks·최소 승인 수·미해결 conversation 차단을 ruleset으로 강제합니다.</p></div></div>
         <div class="actions" style="margin-top:16px">
           <a class="btn" href="https://github.com/hijigoo/dev-agent-workflow/issues/new/choose" target="_blank" rel="noreferrer">Issue 생성</a>
           <a class="btn" href="https://github.com/hijigoo/dev-agent-workflow/actions" target="_blank" rel="noreferrer">Actions 확인</a>
@@ -716,7 +716,7 @@ security / dependency-review</pre></article>
           <div class="tutorial-step"><span class="tutorial-index">2</span><div><h3>사용자가 GitHub 계정을 연결합니다</h3><p>Jira에서 GitHub 인증과 조직 SSO를 완료하고 대상 저장소 write 권한을 확인합니다. 연결 테스트용 work item은 민감하지 않은 샘플을 사용합니다.</p></div></div>
           <div class="tutorial-step"><span class="tutorial-index">3</span><div><h3>Agent-ready work item을 작성합니다</h3><p>제목, 배경, 대상 저장소, 범위·제외 범위, 인수 조건, regression 명령, 보고 형식을 입력합니다. 이 문서의 “샘플 Issue” 본문을 그대로 사용할 수 있습니다.</p></div></div>
           <div class="tutorial-step"><span class="tutorial-index">4</span><div><h3>GitHub Copilot에 할당합니다</h3><p>Jira Assignee에서 GitHub Copilot을 선택하거나 댓글에 <code>@GitHub Copilot</code>을 호출합니다. Jira Automation을 사용할 때도 먼저 수동 흐름으로 권한과 컨텍스트 전달 범위를 검증합니다.</p></div></div>
-          <div class="tutorial-step"><span class="tutorial-index">5</span><div><h3>GitHub에서 결과를 검토합니다</h3><p>Jira activity의 Agent session과 Draft/WIP PR에서 진행 상황을 확인합니다. Draft 중에는 통합 PR job을 실행하지 않고, Agent가 <strong>Ready for review</strong>로 전환한 뒤 PR 1/3 품질 → 2/3 CodeQL → 3/3 병합 준비를 시작합니다. 후속 수정은 Jira에서 새 작업을 만들기보다 기존 PR에 <code>@copilot</code> 댓글로 요청합니다.</p><p><strong>완료 증거:</strong> Jira assignee/activity, Agent session, Ready for review PR, required checks, Jira의 최종 PR 링크</p></div></div>
+          <div class="tutorial-step"><span class="tutorial-index">5</span><div><h3>GitHub에서 결과를 검토합니다</h3><p>Jira activity의 Agent session과 Draft/WIP PR에서 진행 상황을 확인합니다. Draft 중에는 PR Validation job을 실행하지 않고, Agent가 <strong>Ready for review</strong>로 전환한 뒤 PR 1/2 품질 → 2/2 CodeQL을 시작합니다. 후속 수정은 Jira에서 새 작업을 만들기보다 기존 PR에 <code>@copilot</code> 댓글로 요청합니다.</p><p><strong>완료 증거:</strong> Jira assignee/activity, Agent session, Ready for review PR, required checks, Jira의 최종 PR 링크</p></div></div>
         </article>
 
         <article class="card tutorial-panel" data-tutorial-panel="slack">
@@ -743,7 +743,7 @@ security / dependency-review</pre></article>
         <article class="card tutorial-panel" data-tutorial-panel="e2e">
           <div class="issue-head"><div><h3 class="issue-title">4. UI·답변 품질 E2E 자동화</h3><div class="pills"><span class="badge native">Actions</span><span class="badge custom">Test agent</span></div></div></div>
           <div class="tutorial-step"><span class="tutorial-index">1</span><div><h3>핵심 사용자 경로를 먼저 선정합니다</h3><p>로그인, 에이전트 선택, 질문, streaming 응답, citation·tool result, 이력 복구처럼 장애 영향이 큰 3~5개 경로부터 자동화합니다. 테스트 전용 계정과 격리 데이터를 준비합니다.</p></div></div>
-          <div class="tutorial-step"><span class="tutorial-index">2</span><div><h3>Playwright test와 artifact를 구성합니다</h3><p>접근성 role/name selector를 사용하고 실패 시 screenshot, video, trace, HTML/JUnit report를 저장합니다. 실행 후 생성 데이터는 항상 정리합니다.</p><span class="path">apps/web/tests/e2e · playwright.config.ts · .github/workflows/agentic-delivery.yml</span><pre class="cmd">npx playwright test
+          <div class="tutorial-step"><span class="tutorial-index">2</span><div><h3>Playwright test와 artifact를 구성합니다</h3><p>접근성 role/name selector를 사용하고 실패 시 screenshot, video, trace, HTML/JUnit report를 저장합니다. 실행 후 생성 데이터는 항상 정리합니다.</p><span class="path">apps/web/tests/e2e · playwright.config.ts · .github/workflows/pr-validation.yml</span><pre class="cmd">npx playwright test
 npx playwright show-report
 npx playwright show-trace test-results/**/trace.zip</pre></div></div>
           <div class="tutorial-step"><span class="tutorial-index">3</span><div><h3>답변 품질 dataset과 rubric을 버전 관리합니다</h3><p>비식별 synthetic/golden 질문에 기대 citation, tool 사용, 필수 사실, 금지 응답을 정의합니다. 정확성·groundedness·안전성·tool 성공률·latency threshold를 코드 리뷰로 변경하게 합니다.</p><span class="path">tests/quality/dataset.jsonl · tests/quality/rubric.yml</span></div></div>
@@ -764,7 +764,7 @@ npx playwright show-trace test-results/**/trace.zip</pre></div></div>
           <div class="issue-head"><div><h3 class="issue-title">6. 평가·승인 후 Azure Container Apps 배포</h3><div class="pills"><span class="badge native">GitHub Actions</span><span class="badge manual">운영 승인</span></div></div></div>
           <div class="tutorial-step"><span class="tutorial-index">1</span><div><h3>Azure와 GitHub를 secret 없이 연결합니다</h3><p>Azure Entra application에 GitHub OIDC federated credential을 만들고 subject를 GitHub API가 반환한 immutable repository prefix와 <code>:environment:production</code> 조합으로 제한합니다. 대상 resource group에서만 Contributor와 User Access Administrator를 부여합니다.</p><span class="path">docs/azure-container-apps-deployment.md</span></div></div>
           <div class="tutorial-step"><span class="tutorial-index">2</span><div><h3>production Environment를 보호합니다</h3><p>GitHub Environment에 required reviewer를 지정하고 Azure client·tenant·subscription ID는 Environment secrets로, location·resource group·name prefix는 variables로 저장합니다. 승인 전 job은 이 값에 접근할 수 없습니다.</p><span class="path">Repository Settings → Environments → production</span></div></div>
-          <div class="tutorial-step"><span class="tutorial-index">3</span><div><h3>병합된 commit을 다시 평가합니다</h3><p><code>main</code> push에서 Python·Web·Playwright·비식별 품질 scorecard를 실행합니다. CodeQL은 PR 2/3에서만 실행하고 merge 후에는 반복하지 않습니다. 실제 병합 commit SHA의 기능 artifact를 배포 승인 근거로 사용합니다.</p><span class="path">.github/workflows/agentic-delivery.yml</span></div></div>
+          <div class="tutorial-step"><span class="tutorial-index">3</span><div><h3>병합된 commit을 다시 평가합니다</h3><p><code>main</code> push에서 Python·Web·Playwright·비식별 품질 scorecard를 실행합니다. CodeQL은 PR 2/2에서만 실행하고 merge 후에는 반복하지 않습니다. 실제 병합 commit SHA의 기능 artifact를 배포 승인 근거로 사용합니다.</p><span class="path">.github/workflows/production-deployment.yml</span></div></div>
           <div class="tutorial-step"><span class="tutorial-index">4</span><div><h3>평가 후 운영 승인을 기다립니다</h3><p>평가가 성공해야 deploy job이 생성되고 <code>production</code> reviewer 승인을 기다립니다. 승인 전에는 Azure login, Bicep, ACR build가 실행되지 않습니다. PR 병합 승인과 운영 배포 승인을 분리합니다.</p></div></div>
           <div class="tutorial-step"><span class="tutorial-index">5</span><div><h3>불변 image와 독립 URL을 확인합니다</h3><p>승인 후 OIDC 로그인, ACR의 commit SHA image build와 세 ACA revision 배포가 실행됩니다. <a href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io" target="_blank" rel="noreferrer">테스트 앱</a>은 회의실·Mini Agent만 제공하고, <a href="https://agentworkflow-work-intake.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io" target="_blank" rel="noreferrer">Work Intake</a>는 업무 요청·Issue 생성만 제공합니다.</p><p><strong>Health:</strong> <a href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/health" target="_blank" rel="noreferrer">테스트 앱</a> · <a href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/api/health" target="_blank" rel="noreferrer">Meeting API</a> · <a href="https://agentworkflow-work-intake.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/health" target="_blank" rel="noreferrer">Work Intake</a></p><p><strong>완료 증거:</strong> post-merge artifact, Environment approval audit, OIDC login, SHA image, ACA revision과 두 외부 URL</p></div></div>
         </article>

@@ -128,31 +128,32 @@ GitHub App for Slack을 설치하고 DM 또는 비민감 thread에서 `@GitHub C
 
 ## GitHub Actions 데모 순서
 
-기본 개발·배포 자동화는 `agentic-delivery.yml` 하나에서 이벤트에 따라 단계를
-나눕니다.
+PR 검증과 Main 배포를 서로 다른 workflow로 분리해 실행 원인과 승인 지점을
+명확하게 표시합니다.
 
 | 번호 | Workflow | 역할 |
 |---|---|---|
 | 00 | Cloud Agent — Reproducible Setup | Copilot Agent job 내부 환경 준비 |
-| 01 | Agentic Delivery — Validate, Secure, Approve, Deploy | PR 검증부터 ACA 배포까지 통합 |
-| 02 | Optional — Weekly Quality Review | 선택형 비식별 품질 리포트 |
+| 01 | PR Validation — Quality and CodeQL | Ready PR 품질·보안 검증 |
+| 02 | Production Deployment — Evaluate, Approve, Deploy | Main 재평가·운영 승인·ACA 배포 |
+| 03 | Optional — Scheduled Security and Quality Review | 주간 CodeQL·선택형 품질 리포트 |
 
 | 구간 | Job | 데모 목적 | 실행 시점 |
 |---|---|---|---|
 | Agent setup | Cloud Agent user-configured setup | Python·Node와 의존성 준비 | Copilot Agent job 내부 |
-| PR 1/3 | Quality validation | Python·React·Playwright·품질 artifact | Ready for review PR |
-| PR 2/3 | CodeQL security | Python·JavaScript/TypeScript 취약점 분석 | PR 1/3 성공 후 |
-| PR 3/3 | Ready to merge | 자동 검증 완료와 사람 리뷰 안내 | PR 2/3 성공 후 |
-| Main 4/5 | Post-merge evaluation | 병합 SHA의 기능·E2E 재평가 | `main` 병합 후 |
-| Main 5/5 | Production approval and ACA deployment | 승인 후 OIDC·ACR·ACA 배포 | 재평가 성공 후 |
+| PR 1/2 | Quality validation | Python·React·Playwright·품질 artifact | Ready for review PR |
+| PR 2/2 | CodeQL security | Python·JavaScript/TypeScript 취약점 분석 | PR 1/2 성공 후 |
+| Main 1/3 | Post-merge evaluation | 병합 SHA의 기능·E2E 재평가 | `main` 병합 후 |
+| Main 2/3 | Production approval notice | 원본 Issue에 승인 링크 알림 | 재평가 성공 후 |
+| Main 3/3 | Production approval and ACA deployment | 승인 후 OIDC·ACR·ACA 배포 | 운영 승인 후 |
 
-Copilot이 만든 Draft/WIP PR에서는 통합 workflow의 PR job을 실행하지 않습니다.
-**Ready for review** 전환 후 PR 1/3~3/3을 순서대로 수행하며, 이후 commit이
-추가되면 최신 commit을 다시 검증합니다. CodeQL은 PR 2/3에서 한 번 실행하고
+Copilot이 만든 Draft/WIP PR에서는 PR Validation job을 실행하지 않습니다.
+**Ready for review** 전환 후 PR 1/2~2/2를 순서대로 수행하며, 이후 commit이
+추가되면 최신 commit을 다시 검증합니다. CodeQL은 PR 2/2에서 한 번 실행하고
 merge 후에는 다시 실행하지 않습니다.
 
-`02 · Optional — Weekly Quality Review`는 운영 품질 모니터링이 필요할 때만 사용하는
-workflow입니다.
+`03 · Optional — Scheduled Security and Quality Review`는 주간 CodeQL과 수동
+비식별 품질 검토를 담당합니다.
 
 일반 Dependabot version-update schedule은 데모 noise를 줄이기 위해 제거했습니다.
 Dependabot alerts와 security updates는 repository **Security & analysis** 설정에서

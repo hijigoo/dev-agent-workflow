@@ -1,0 +1,44 @@
+name: "01 · PR Validation — Quality and CodeQL"
+run-name: "01 · PR · #${{ github.event.pull_request.number || 'manual' }} · ${{ github.sha }}"
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: "PR 1/2 · Quality validation"
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/quality-validation
+        with:
+          artifact-name: pr-evaluation-${{ github.event.pull_request.number || github.run_id }}-${{ github.sha }}
+          retention-days: "14"
+
+  security:
+    name: "PR 2/2 · CodeQL security"
+    needs: quality
+    if: needs.quality.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: python,javascript-typescript
+      - uses: github/codeql-action/analyze@v4
