@@ -1,10 +1,10 @@
 import type { ApiRoom, Room } from './types'
 
 const roomDisplayMetadata = [
-  { floor: '12F · North', status: 'Available' as const, nextAvailable: 'Available all afternoon' },
-  { floor: '11F · East', status: 'Available' as const, nextAvailable: 'Available until 16:30' },
-  { floor: '12F · West', status: 'Limited' as const, nextAvailable: 'Next opening 15:00' },
-  { floor: '10F · Quiet zone', status: 'Available' as const, nextAvailable: 'Available now' },
+  { floor: '12층 · 북측', status: 'Available' as const, nextAvailable: '오후 내내 이용 가능' },
+  { floor: '11층 · 동측', status: 'Available' as const, nextAvailable: '16:30까지 이용 가능' },
+  { floor: '12층 · 서측', status: 'Limited' as const, nextAvailable: '다음 가능 시간 15:00' },
+  { floor: '10층 · 집중 구역', status: 'Available' as const, nextAvailable: '지금 이용 가능' },
 ]
 
 export function toRoomView(room: ApiRoom, index: number): Room {
@@ -15,38 +15,38 @@ export function toRoomView(room: ApiRoom, index: number): Room {
 export const sampleRooms: Room[] = [
   {
     id: 'demo-aurora',
-    name: 'Aurora (Demo)',
-    floor: '12F · North',
+    name: '오로라(데모)',
+    floor: '12층 · 북측',
     capacity: 12,
     equipment: ['Display', 'Whiteboard', 'Video conferencing'],
     status: 'Available',
-    nextAvailable: 'Demo availability',
+    nextAvailable: '데모 이용 가능',
   },
   {
     id: 'demo-cedar',
-    name: 'Cedar (Demo)',
-    floor: '11F · East',
+    name: '시더(데모)',
+    floor: '11층 · 동측',
     capacity: 6,
     equipment: ['Display', 'Whiteboard'],
     status: 'Available',
-    nextAvailable: 'Demo availability',
+    nextAvailable: '데모 이용 가능',
   },
   {
     id: 'demo-orbit',
-    name: 'Orbit (Demo)',
-    floor: '12F · West',
+    name: '오르빗(데모)',
+    floor: '12층 · 서측',
     capacity: 18,
     equipment: ['Display', 'Whiteboard', 'Video conferencing'],
     status: 'Limited',
-    nextAvailable: 'Demo availability',
+    nextAvailable: '데모 이용 가능',
   },
   {
     id: 'demo-focus-3',
-    name: 'Focus 3 (Demo)',
-    floor: '10F · Quiet zone',
+    name: '포커스 3(데모)',
+    floor: '10층 · 집중 구역',
     capacity: 2,
     equipment: ['Phone booth'],
     status: 'Available',
-    nextAvailable: 'Demo availability',
+    nextAvailable: '데모 이용 가능',
   },
 ]

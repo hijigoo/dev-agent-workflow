@@ -39,9 +39,9 @@ describe('ReservationsPage', () => {
     )
 
     expect(screen.getByRole('heading', { name: 'Platform review' })).toBeInTheDocument()
-    expect(screen.getByText(/Aurora · 60 min · Status: confirmed/)).toBeInTheDocument()
+    expect(screen.getByText(/Aurora · 60분 · 상태: 확정/)).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Cancel Platform review' }))
+    await user.click(screen.getByRole('button', { name: 'Platform review 취소' }))
     expect(onCancel).toHaveBeenCalledWith(42)
   })
 })

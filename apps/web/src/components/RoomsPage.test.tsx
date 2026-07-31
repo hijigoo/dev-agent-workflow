@@ -19,12 +19,12 @@ describe('RoomsPage', () => {
     const user = userEvent.setup()
     renderRooms()
 
-    await user.selectOptions(screen.getByLabelText('Minimum capacity'), '16')
-    await user.click(screen.getByRole('button', { name: 'Video conferencing' }))
+    await user.selectOptions(screen.getByLabelText('최소 수용 인원'), '16')
+    await user.click(screen.getByRole('button', { name: '화상 회의' }))
 
-    expect(screen.getByRole('heading', { name: 'Orbit (Demo)' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Aurora (Demo)' })).not.toBeInTheDocument()
-    expect(screen.getByText('1 match')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '오르빗(데모)' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: '오로라(데모)' })).not.toBeInTheDocument()
+    expect(screen.getByText('1건 일치')).toBeInTheDocument()
   })
 
   it('creates timezone-aware start and end values from the form', async () => {
@@ -32,16 +32,16 @@ describe('RoomsPage', () => {
     const onCreateReservation = vi.fn().mockResolvedValue(undefined)
     renderRooms(onCreateReservation)
 
-    await user.click(screen.getByRole('button', { name: 'Reserve Cedar (Demo)' }))
-    await user.type(screen.getByLabelText('Meeting title'), 'Design review')
-    const date = screen.getByLabelText('Date')
-    const startTime = screen.getByLabelText('Start time')
+    await user.click(screen.getByRole('button', { name: '시더(데모) 예약' }))
+    await user.type(screen.getByLabelText('회의 제목'), 'Design review')
+    const date = screen.getByLabelText('날짜')
+    const startTime = screen.getByLabelText('시작 시간')
     await user.clear(date)
     await user.type(date, '2026-08-04')
     await user.clear(startTime)
     await user.type(startTime, '09:30')
-    await user.selectOptions(screen.getByLabelText('Duration'), '90')
-    await user.click(screen.getByRole('button', { name: 'Confirm reservation' }))
+    await user.selectOptions(screen.getByLabelText('진행 시간'), '90')
+    await user.click(screen.getByRole('button', { name: '예약 확정' }))
 
     expect(onCreateReservation).toHaveBeenCalledWith(
       {
@@ -57,10 +57,10 @@ describe('RoomsPage', () => {
     const user = userEvent.setup()
     renderRooms(vi.fn().mockRejectedValue(new Error('offline')))
 
-    await user.click(screen.getByRole('button', { name: 'Reserve Aurora (Demo)' }))
-    await user.type(screen.getByLabelText('Meeting title'), 'Design review')
-    await user.click(screen.getByRole('button', { name: 'Confirm reservation' }))
+    await user.click(screen.getByRole('button', { name: '오로라(데모) 예약' }))
+    await user.type(screen.getByLabelText('회의 제목'), 'Design review')
+    await user.click(screen.getByRole('button', { name: '예약 확정' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('could not be created')
+    expect(await screen.findByRole('alert')).toHaveTextContent('생성하지 못했습니다')
   })
 })

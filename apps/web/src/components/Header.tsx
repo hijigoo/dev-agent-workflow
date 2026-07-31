@@ -6,10 +6,10 @@ interface HeaderProps {
 }
 
 const navigation: Array<{ id: Page; label: string }> = [
-  { id: 'rooms', label: 'Rooms' },
-  { id: 'reservations', label: 'Reservations' },
-  { id: 'agent', label: 'Mini Agent' },
-  { id: 'operations', label: 'Cloud Agent Ops' },
+  { id: 'rooms', label: '회의실' },
+  { id: 'reservations', label: '예약' },
+  { id: 'agent', label: '미니 에이전트' },
+  { id: 'operations', label: '클라우드 에이전트 운영' },
 ]
 
 export function Header({ activePage, onNavigate }: HeaderProps) {
@@ -19,11 +19,11 @@ export function Header({ activePage, onNavigate }: HeaderProps) {
         <button className="brand" type="button" onClick={() => onNavigate('rooms')}>
           <span className="brand-mark" aria-hidden="true">A</span>
           <span>
-            <strong>Atlas</strong>
-            <small>Platform operations</small>
+            <strong>아틀라스</strong>
+            <small>플랫폼 운영</small>
           </span>
         </button>
-        <nav aria-label="Primary navigation">
+        <nav aria-label="기본 탐색">
           <ul className="nav-list">
             {navigation.map((item) => (
               <li key={item.id}>
@@ -39,9 +39,9 @@ export function Header({ activePage, onNavigate }: HeaderProps) {
             ))}
           </ul>
         </nav>
-        <div className="user-badge" aria-label="Signed in as Mina Park">
+        <div className="user-badge" aria-label="미나 박으로 로그인됨">
           <span className="status-dot" aria-hidden="true" />
-          <span className="user-name">Mina Park</span>
+          <span className="user-name">미나 박</span>
           <strong aria-hidden="true">MP</strong>
         </div>
       </div>
