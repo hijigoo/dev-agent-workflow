@@ -1,8 +1,11 @@
 import type { Page } from '../App'
+import type { Theme } from '../useTheme'
 
 interface HeaderProps {
   activePage: Page
   onNavigate: (page: Page) => void
+  theme: Theme
+  onToggleTheme: () => void
 }
 
 const navigation: Array<{ id: Page; label: string }> = [
@@ -12,7 +15,7 @@ const navigation: Array<{ id: Page; label: string }> = [
   { id: 'operations', label: '클라우드 에이전트 운영' },
 ]
 
-export function Header({ activePage, onNavigate }: HeaderProps) {
+export function Header({ activePage, onNavigate, theme, onToggleTheme }: HeaderProps) {
   return (
     <header className="site-header">
       <div className="header-inner">
@@ -39,6 +42,14 @@ export function Header({ activePage, onNavigate }: HeaderProps) {
             ))}
           </ul>
         </nav>
+        <button
+          type="button"
+          className="theme-toggle icon-button"
+          aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+          onClick={onToggleTheme}
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
         <div className="user-badge" aria-label="미나 박으로 로그인됨">
           <span className="status-dot" aria-hidden="true" />
           <span className="user-name">미나 박</span>
