@@ -31,7 +31,7 @@ jobs:
               --output quality-report.md
           fi
           cat quality-report.md >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: weekly-quality-report
           path: quality-report.md

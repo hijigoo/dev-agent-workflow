@@ -55,7 +55,7 @@ jobs:
           cat quality-report.md >> "$GITHUB_STEP_SUMMARY"
       - name: Upload evaluation evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: post-merge-evaluation-${{ github.sha }}
           if-no-files-found: warn
