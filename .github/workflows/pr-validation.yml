@@ -91,10 +91,16 @@ jobs:
                   .runs[]? as $run |
                   $run.results[]? as $result |
                   (
-                    [
-                      $run.tool.driver.rules[]? |
-                      select(.id == $result.ruleId)
-                    ][0].properties["security-severity"] // null
+                    (
+                      [
+                        $run.tool.driver.rules[]? |
+                        select(.id == $result.ruleId)
+                      ] +
+                      [
+                        $run.tool.extensions[]?.rules[]? |
+                        select(.id == $result.ruleId)
+                      ]
+                    )[0].properties["security-severity"] // null
                   ) as $score |
                   {
                     score: (
