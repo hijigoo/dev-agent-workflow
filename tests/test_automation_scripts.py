@@ -159,8 +159,20 @@ class PullRequestWorkflowTests(unittest.TestCase):
         self.assertEqual(
             deployment.count("uses: ./.github/actions/quality-validation"), 1
         )
+        self.assertIn('summary-title: "PR 1/2 · Quality validation"', pr)
+        self.assertIn(
+            'summary-title: "Main 1/3 · Post-merge evaluation"', deployment
+        )
         self.assertIn("python -m pytest", action)
         self.assertIn("npm run test:e2e", action)
+        self.assertIn("Write validation summary", action)
+        self.assertIn("$GITHUB_STEP_SUMMARY", action)
+        self.assertNotIn("quality-report.md", action)
+
+        optional = (
+            ROOT / ".github" / "workflows" / "weekly-quality-review.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("quality-report.md", optional)
 
 
 if __name__ == "__main__":

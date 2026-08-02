@@ -359,7 +359,7 @@
               <tr><td>작업 할당·커뮤니케이션</td><td><span class="badge partial">부분 구현</span></td><td>GitHub Issue, Copilot 할당, PR feedback</td><td>Jira/Slack tenant 연동과 자동 routing</td><td>작업 범위·민감정보·완료 승인</td></tr>
               <tr><td>Dograh·Pipecat 업그레이드</td><td><span class="badge proposed">추가 설계</span></td><td>01 PR 검증과 02 배포 재사용 가능</td><td>릴리즈 watcher, 버전 상태, upgrade Issue 생성</td><td>breaking change 판단·Merge</td></tr>
               <tr><td>GHAS 취약점 조치</td><td><span class="badge partial">부분 구현</span></td><td>PR CodeQL, 주간 CodeQL, Security Remediation agent</td><td>alert → Agent Issue/assignment 자동화</td><td>위험 수용·오탐·보안 승인</td></tr>
-              <tr><td>UI·답변 품질 E2E</td><td><span class="badge current">현재 구현</span></td><td>Playwright, React, Python, 품질 report·artifact</td><td>실제 플랫폼 dataset·환경·threshold 연결</td><td>기준 변경·실패 판정</td></tr>
+              <tr><td>UI·답변 품질 E2E</td><td><span class="badge current">현재 구현</span></td><td>Playwright, React, Python, 실행 요약·artifact</td><td>실제 플랫폼 dataset·환경·threshold 연결</td><td>기준 변경·실패 판정</td></tr>
               <tr><td>신규 기능 개발</td><td><span class="badge current">현재 구현</span></td><td>Issue → Draft PR → Ready → 01 → Review → 02</td><td>Jira 양방향 상태 동기화</td><td>Ready 전환·리뷰·Merge·배포 승인</td></tr>
               <tr><td>로그 기반 품질 모니터링</td><td><span class="badge partial">부분 구현</span></td><td>비식별 report 생성기·Quality Analyst</td><td>집계 API, 주기 실행, 개선 Issue intake</td><td>원인 확정·개선안 채택</td></tr>
             </tbody>
@@ -593,8 +593,8 @@
         </div>
         <div class="answer">
           <strong>답변:</strong> 현재 샘플에서 가장 구체적으로 구현된 영역입니다.
-          01과 Main 1/3이 동일한 품질 composite action을 사용해 Python·React·Playwright·
-          비식별 품질 리포트와 artifact를 생성합니다.
+          01과 Main 1/3이 동일한 검증 composite action을 사용하되, 각 job에서 실제 수행한
+          Python·React·Playwright 결과만 별도 요약하고 비식별 품질 리포트는 03에서 생성합니다.
         </div>
         <div class="grid three">
           <article class="card">

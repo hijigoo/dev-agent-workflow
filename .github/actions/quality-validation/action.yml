@@ -1,7 +1,10 @@
 name: Quality validation
-description: Run Python, web, browser, and privacy-safe quality checks.
+description: Run Python, web, and browser checks with a job-specific summary.
 
 inputs:
+  summary-title:
+    description: Heading for the validation summary.
+    required: true
   artifact-name:
     description: Name of the uploaded evaluation artifact.
     required: true
@@ -24,7 +27,8 @@ runs:
     - name: Install Python services
       shell: bash
       run: python -m pip install -e 'apps/api[test]'
-    - name: Run Python regression
+    - id: python_tests
+      name: Run Python regression
       shell: bash
       run: python -m pytest apps/api/tests tests
     - name: Install web and Chromium dependencies
@@ -33,24 +37,55 @@ runs:
       run: |
         npm ci
         npx playwright install --with-deps chromium
-    - name: Run web lint, unit tests and build
+    - id: web_checks
+      name: Run web lint, unit tests and build
       shell: bash
       working-directory: apps/web
       run: |
         npm run lint
         npm test
         npm run build
-    - name: Run browser E2E
+    - id: browser_e2e
+      name: Run browser E2E
       shell: bash
       working-directory: apps/web
       run: npm run test:e2e
-    - name: 비식별 한글 품질 리포트 생성
+    - name: Write validation summary
+      if: always()
       shell: bash
+      env:
+        SUMMARY_TITLE: ${{ inputs.summary-title }}
+        PYTHON_RESULT: ${{ steps.python_tests.outcome }}
+        WEB_RESULT: ${{ steps.web_checks.outcome }}
+        E2E_RESULT: ${{ steps.browser_e2e.outcome }}
       run: |
-        python scripts/build_quality_report.py \
-          --input samples/quality-metrics.json \
-          --output quality-report.md
-        cat quality-report.md >> "$GITHUB_STEP_SUMMARY"
+        format_result() {
+          case "$1" in
+            success) printf '✅ 성공' ;;
+            failure) printf '❌ 실패' ;;
+            cancelled) printf '⏹️ 취소' ;;
+            skipped|"") printf '⏭️ 미실행' ;;
+            *) printf '%s' "$1" ;;
+          esac
+        }
+
+        {
+          echo "## $SUMMARY_TITLE"
+          echo
+          echo "- Commit: \`$GITHUB_SHA\`"
+          echo "- Ref: \`$GITHUB_REF\`"
+          echo
+          echo "| 검증 | 실행 내용 | 결과 |"
+          echo "|---|---|---|"
+          printf '| Python regression | `pytest apps/api/tests tests` | %s |\n' \
+            "$(format_result "$PYTHON_RESULT")"
+          printf '| Web quality | `lint`, unit test, build | %s |\n' \
+            "$(format_result "$WEB_RESULT")"
+          printf '| Browser E2E | Playwright Chromium | %s |\n' \
+            "$(format_result "$E2E_RESULT")"
+          echo
+          echo "이 요약은 이 job에서 실제 실행한 검증만 표시합니다."
+        } >> "$GITHUB_STEP_SUMMARY"
     - name: Upload evaluation evidence
       if: always()
       uses: actions/upload-artifact@v7
@@ -60,5 +95,4 @@ runs:
         path: |
           apps/web/playwright-report/
           apps/web/test-results/
-          quality-report.md
         retention-days: ${{ inputs.retention-days }}

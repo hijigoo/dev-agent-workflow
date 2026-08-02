@@ -23,6 +23,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/quality-validation
         with:
+          summary-title: "PR 1/2 · Quality validation"
           artifact-name: pr-evaluation-${{ github.event.pull_request.number || github.run_id }}-${{ github.sha }}
           retention-days: "14"
 

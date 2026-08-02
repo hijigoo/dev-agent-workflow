@@ -131,7 +131,7 @@ PR 검증과 Main 배포를 서로 다른 workflow로 분리해 실행 원인과
 | 구간 | Job | 데모 목적 | 실행 시점 |
 |---|---|---|---|
 | Agent setup | Cloud Agent user-configured setup | Python·Node와 의존성 준비 | Copilot Agent job 내부 |
-| PR 1/2 | Quality validation | Python·React·Playwright·품질 artifact | Ready for review PR |
+| PR 1/2 | Quality validation | Python·React·Playwright 실행 요약·artifact | Ready for review PR |
 | PR 2/2 | CodeQL security | Python·JavaScript/TypeScript 취약점 분석 | PR 1/2 성공 후 |
 | Main 1/3 | Post-merge evaluation | 병합 SHA의 기능·E2E 재평가 | `main` 병합 후 |
 | Main 2/3 | Production approval notice | 원본 Issue에 승인 링크 알림 | 재평가 성공 후 |
@@ -158,7 +158,7 @@ Dependabot alerts와 security updates는 repository **Security & analysis** 설�
 
 ```text
 main merge
-  → post-merge unit/integration/E2E/quality evaluation
+  → post-merge unit/integration/E2E evaluation summary
   → ACA_DEPLOYMENT_ENABLED 확인
       ├─ false: 승인 알림·배포를 정상 skip
       └─ true: production Environment required reviewer 대기
