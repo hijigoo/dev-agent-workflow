@@ -153,36 +153,100 @@ npx playwright install chromium
 
 GitHub App for Slack을 설치하고 DM 또는 비민감 thread에서 `@GitHub Copilot`을 호출합니다. Slack은 요청·상태 공유, Jira는 업무 추적, GitHub PR은 코드 검토의 기준 채널로 사용합니다.
 
-## 수동 진단에서 Cloud Agent 수정 PR까지
+## 수동 Actions 03~05 실행 흐름
+
+### 03 · OSS Upgrade Intake
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Human as 담당자
     participant Actions as GitHub Actions
+    participant Repo as 현재 저장소
+    participant Registry as PyPI / npm
     participant Issue as GitHub Issue
     participant Agent as Cloud Agent
     participant PR as Pull Request
 
-    Human->>Actions: 03 OSS / 04 CodeQL / 05 E2E 중 선택해 Run workflow
-    Actions->>Actions: 최신 버전·취약점·E2E 결과 진단
-
-    alt 업데이트·경고·실패 없음
-        Actions-->>Human: Job Summary와 artifact 보고
-    else 조치 대상 발견
-        Actions->>Issue: 중복 방지된 Agent-ready Issue 생성·갱신
-        Issue-->>Human: 진단 근거와 완료 조건 제공
-        Human->>Agent: Issue를 Copilot에 할당
-        Agent->>Actions: 00 재현 환경 준비
-        Agent->>Agent: 코드·dependency 수정 및 regression test
-        Agent->>PR: Draft PR 생성
-        Human->>PR: 변경 범위 확인 후 Ready 전환
-        PR->>Actions: 기존 01 PR Validation
-        Actions-->>Human: 품질·E2E·CodeQL 결과
-        Human->>PR: 리뷰·승인·병합
-        PR->>Actions: 기존 02 Production Deployment
-    end
+    Human->>Actions: 03에서 Run workflow
+    Actions->>Repo: FastAPI 최소 버전·React lock 버전 확인
+    Actions->>Registry: 최신 stable 버전 조회
+    Registry-->>Actions: FastAPI·React·React DOM 최신 버전
+    Actions->>Actions: 현재 버전과 최신 stable 비교
+    Actions-->>Human: 비교 결과 Job Summary
+    Note over Human,Actions: 업데이트가 없으면 여기서 종료
+    Actions->>Issue: Agent-ready 업그레이드 Issue 생성·갱신
+    Human->>Agent: Issue를 Copilot에 할당
+    Agent->>Actions: 00 재현 환경 준비
+    Agent->>PR: dependency 수정·회귀 테스트 후 Draft PR
+    Human->>PR: Ready 전환
+    PR->>Actions: 01 PR Validation
 ```
+
+03은 버전을 직접 올리지 않습니다. 업데이트가 발견된 경우에만 현재/최신 버전과 완료
+조건을 담은 Issue를 만들고, 실제 수정은 사람이 할당한 Cloud Agent가 담당합니다.
+
+### 04 · Branch CodeQL Remediation
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Human as 담당자
+    participant Actions as GitHub Actions
+    participant Repo as 선택 Branch
+    participant Security as GitHub Code Scanning
+    participant Issue as GitHub Issue
+    participant Agent as Cloud Agent
+    participant PR as Pull Request
+
+    Human->>Actions: 04에서 target_branch 입력 후 Run workflow
+    Actions->>Repo: Branch 존재 확인·분석 SHA 고정
+    Repo-->>Actions: 고정된 commit checkout
+    Actions->>Actions: Python·JavaScript/TypeScript CodeQL
+    Actions->>Security: SARIF를 해당 branch 결과로 업로드
+    Actions-->>Human: 심각도 Summary·상세 링크
+    Note over Human,Actions: 보안 경고가 없으면 여기서 종료
+    Actions->>Issue: Branch별 Agent-ready 보안 Issue 생성·갱신
+    Human->>Agent: Issue를 Copilot에 할당
+    Agent->>Actions: 00 재현 환경 준비
+    Agent->>PR: root cause 수정·보안 회귀 테스트 후 Draft PR
+    Human->>PR: Ready 전환
+    PR->>Actions: 01 PR Validation과 CodeQL
+```
+
+04는 입력한 branch가 실제 repository branch인지 먼저 확인하고 그 시점의 SHA를 고정합니다.
+따라서 분석 도중 branch가 이동해도 checkout·SARIF·Security 결과가 같은 commit을 가리킵니다.
+
+### 05 · Project E2E
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Human as 담당자
+    participant Actions as GitHub Actions
+    participant App as Meeting API / Web
+    participant Browser as Playwright Chromium
+    participant Issue as GitHub Issue
+    participant Agent as Cloud Agent
+    participant PR as Pull Request
+
+    Human->>Actions: 05에서 branch 선택 후 Run workflow
+    Actions->>Actions: Python·Node·Chromium 의존성 설치
+    Actions->>App: 격리 DB로 API와 Web 기동
+    Actions->>Browser: 예약·영어/한국어 Mini Agent 3개 실행
+    Browser-->>Actions: 결과·trace·screenshot·video
+    Actions-->>Human: Job Summary와 Playwright artifact
+    Note over Human,Actions: 3개 scenario가 성공하면 여기서 종료
+    Actions->>Issue: Agent-ready E2E 회귀 Issue 생성·갱신
+    Human->>Agent: Issue를 Copilot에 할당
+    Agent->>Actions: 00 재현 환경 준비
+    Agent->>PR: 실패 재현·root cause 수정 후 Draft PR
+    Human->>PR: Ready 전환
+    PR->>Actions: 01 PR Validation과 E2E 재검증
+```
+
+05는 테스트 실패를 retry나 threshold 완화로 숨기지 않습니다. 결과 보고와 artifact 업로드
+후 Issue를 만든 다음 workflow 자체도 실패시켜 사람이 조치 필요 상태를 놓치지 않게 합니다.
 
 `03`~`05`는 진단과 Issue 생성까지만 담당합니다. source code 수정, Copilot 할당,
 PR 생성, 병합, 배포를 자동으로 수행하지 않으므로 모든 변경에는 사람의 명시적 승인
@@ -204,14 +268,6 @@ workflow run 자체가 생성되지 않습니다. Ready 이후 commit이 추가�
 PR 2/2에서 한 번 실행하고 merge 후에는 다시 실행하지 않습니다.
 
 `03`~`05`는 예약 실행이 아니라 Actions의 **Run workflow** 버튼으로만 시작합니다.
-진단 결과가 있으면 코드나 PR을 직접 만들지 않고 `agent-ready` Issue까지만 생성합니다.
-사람이 Issue의 Assignee로 Copilot을 선택하면 Cloud Agent가 별도 branch에서 수정과
-regression test를 수행하고 draft PR을 만듭니다. 이 PR은 다시 기존 `01` 검증과 사람
-승인을 거쳐야 합니다.
-
-- `03`: FastAPI 최소 지원 버전과 React/React DOM lock 버전을 registry 최신 stable과 비교
-- `04`: 입력한 같은 저장소 branch를 Python·JavaScript/TypeScript CodeQL로 분석
-- `05`: 실제 Meeting API·Web을 기동해 기존 Playwright 예약·Mini Agent E2E 실행
 
 일반 Dependabot version-update schedule은 데모 noise를 줄이기 위해 제거했습니다.
 Dependabot alerts와 security updates는 repository **Security & analysis** 설정에서
