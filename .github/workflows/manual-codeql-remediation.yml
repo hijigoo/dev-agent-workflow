@@ -1,0 +1,168 @@
+name: "05 · Manual — Branch CodeQL Remediation"
+run-name: "05 · CodeQL · ${{ inputs.target_branch }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: Same-repository branch to analyze
+        required: true
+        default: main
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+  packages: read
+  security-events: write
+
+concurrency:
+  group: manual-codeql-remediation-${{ inputs.target_branch }}
+  cancel-in-progress: false
+
+jobs:
+  codeql:
+    name: Analyze branch and prepare remediation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - id: target
+        name: Resolve exact repository branch
+        uses: actions/github-script@v9
+        env:
+          TARGET_BRANCH: ${{ inputs.target_branch }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const branch = process.env.TARGET_BRANCH;
+            if (!branch || branch.startsWith("refs/") || /^[0-9a-f]{40}$/i.test(branch)) {
+              core.setFailed("target_branch must be a repository branch name, not a ref or SHA");
+              return;
+            }
+            try {
+              const response = await github.rest.repos.getBranch({ owner, repo, branch });
+              core.setOutput("ref", `refs/heads/${branch}`);
+              core.setOutput("sha", response.data.commit.sha);
+            } catch (error) {
+              if (error.status === 404) {
+                core.setFailed(`Repository branch was not found: ${branch}`);
+                return;
+              }
+              throw error;
+            }
+      - name: Checkout automation
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: automation
+      - name: Checkout target branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.target.outputs.sha }}
+          path: target
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: python,javascript-typescript
+          source-root: target
+      - id: analyze
+        name: Analyze and upload selected branch
+        uses: github/codeql-action/analyze@v4
+        with:
+          checkout_path: ${{ github.workspace }}/target
+          ref: ${{ steps.target.outputs.ref }}
+          sha: ${{ steps.target.outputs.sha }}
+          category: /manual-branch-scan
+          post-processed-sarif-path: codeql-sarif
+      - id: report
+        name: Summarize CodeQL SARIF
+        env:
+          TARGET_BRANCH: ${{ inputs.target_branch }}
+          TARGET_SHA: ${{ steps.target.outputs.sha }}
+        run: |
+          python automation/scripts/summarize_codeql_sarif.py \
+            --input-dir codeql-sarif \
+            --branch "$TARGET_BRANCH" \
+            --sha "$TARGET_SHA"
+          cat codeql-report.md >> "$GITHUB_STEP_SUMMARY"
+          query="$(python -c 'import os, urllib.parse; print(urllib.parse.quote(f"ref:refs/heads/{os.environ[\"TARGET_BRANCH\"]} tool:CodeQL is:open"))')"
+          printf '\n[선택 branch Code scanning 상세 보기](%s/%s/security/code-scanning?query=%s)\n' \
+            "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$query" >> "$GITHUB_STEP_SUMMARY"
+      - id: issue
+        name: Create or update one Agent-ready security Issue
+        if: steps.report.outputs.total != '0'
+        uses: actions/github-script@v9
+        env:
+          REPORT_PATH: ${{ steps.report.outputs.report_path }}
+          TARGET_BRANCH: ${{ inputs.target_branch }}
+          TARGET_SHA: ${{ steps.target.outputs.sha }}
+        with:
+          script: |
+            const fs = require("fs");
+            const { owner, repo } = context.repo;
+            const markerKey = Buffer.from(process.env.TARGET_BRANCH).toString("base64url");
+            const marker = `<!-- manual-codeql-remediation:${markerKey} -->`;
+            const report = fs.readFileSync(process.env.REPORT_PATH, "utf8");
+            const query = encodeURIComponent(
+              `ref:refs/heads/${process.env.TARGET_BRANCH} tool:CodeQL is:open`,
+            );
+            const securityUrl =
+              `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}` +
+              `/security/code-scanning?query=${query}`;
+            const runUrl =
+              `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}` +
+              `/actions/runs/${process.env.GITHUB_RUN_ID}`;
+            const body = `${marker}
+            ${report}
+
+            ## 상세 근거
+            - [Code scanning branch 결과](${securityUrl})
+            - [Actions 분석 실행](${runUrl})
+
+            ## Cloud Agent 작업
+            1. 이 Issue를 Copilot에 할당합니다.
+            2. 상세 alert의 source-to-sink 경로와 실제 악용 조건을 확인합니다.
+            3. alert를 숨기거나 query·severity를 약화하지 말고 root cause를 수정합니다.
+            4. 방어 동작을 증명하는 regression test를 추가합니다.
+            5. Python·Web·Playwright와 CodeQL을 재검증하고 draft PR을 생성합니다.
+
+            ## 안전 조건
+            secret이나 사용자 데이터를 Issue·로그에 복사하지 말고, 인증·인가·workflow
+            변경은 security reviewer에게 결정을 요청하세요. 자동 병합하지 마세요.`;
+
+            const open = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: "open",
+              per_page: 100,
+            });
+            const existing = open.find(
+              (item) => !item.pull_request && item.body?.includes(marker),
+            );
+            const title = `[보안] ${process.env.TARGET_BRANCH} CodeQL 경고 조치`;
+            let issue;
+            if (existing) {
+              issue = await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: existing.number,
+                title,
+                body,
+                labels: ["agent-ready", "security"],
+              });
+              core.info(`Updated Issue #${existing.number}`);
+            } else {
+              issue = await github.rest.issues.create({
+                owner,
+                repo,
+                title,
+                body,
+                labels: ["agent-ready", "security"],
+              });
+              core.info(`Created Issue #${issue.data.number}`);
+            }
+            core.setOutput("issue_url", issue.data.html_url);
+      - name: Add Issue link to summary
+        if: steps.issue.outputs.issue_url != ''
+        env:
+          ISSUE_URL: ${{ steps.issue.outputs.issue_url }}
+        run: printf '\n- **Agent-ready 보안 Issue:** %s\n' "$ISSUE_URL" >> "$GITHUB_STEP_SUMMARY"

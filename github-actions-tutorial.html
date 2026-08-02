@@ -1,0 +1,957 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta
+    name="description"
+    content="dev-agent-workflow의 GitHub Actions 00~06 호출 흐름과 전체 테스트 튜토리얼"
+  >
+  <title>GitHub Actions 00~06 실행 지도와 튜토리얼</title>
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--cp-bg);
+      color: var(--cp-text);
+      font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--cp-link);
+      text-underline-offset: 3px;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    code {
+      padding: 2px 6px;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      background: var(--cp-surface-soft);
+      color: var(--cp-text);
+      font-family: Consolas, "Courier New", Courier, monospace;
+      font-size: 0.9em;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--cp-border);
+      background: var(--cp-panel-strong);
+    }
+
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 64px;
+      gap: 16px;
+    }
+
+    .brand {
+      color: var(--cp-text);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      min-height: 40px;
+      padding: 8px 12px;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      background: var(--cp-surface);
+      color: var(--cp-text);
+      text-decoration: none;
+    }
+
+    .button:hover {
+      border-color: var(--cp-accent);
+      color: var(--cp-accent);
+    }
+
+    .hero {
+      padding: 72px 0 48px;
+      border-bottom: 1px solid var(--cp-border);
+      background: var(--cp-bg-elevated);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--cp-accent);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      max-width: 850px;
+      margin-bottom: 20px;
+      font-size: clamp(2.1rem, 6vw, 4.8rem);
+      line-height: 1.03;
+      letter-spacing: -0.045em;
+    }
+
+    .lead {
+      max-width: 850px;
+      color: var(--cp-text-muted);
+      font-size: 1.12rem;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 3px 9px;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      background: var(--cp-surface);
+      color: var(--cp-text-muted);
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .badge.accent {
+      border-color: var(--cp-accent);
+      background: var(--cp-accent-soft);
+      color: var(--cp-accent);
+    }
+
+    .badge.warning {
+      color: var(--cp-warning);
+    }
+
+    .badge.danger {
+      color: var(--cp-danger);
+    }
+
+    .section {
+      padding: 56px 0;
+      border-bottom: 1px solid var(--cp-border);
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.75fr);
+      gap: 32px;
+      align-items: end;
+      margin-bottom: 28px;
+    }
+
+    .section-head h2 {
+      margin-bottom: 0;
+      font-size: clamp(1.7rem, 4vw, 2.8rem);
+      letter-spacing: -0.03em;
+    }
+
+    .section-head > p {
+      margin-bottom: 0;
+      color: var(--cp-text-muted);
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .legend span {
+      padding: 6px 10px;
+      border-left: 4px solid var(--cp-border-strong);
+      background: var(--cp-surface);
+    }
+
+    .legend .action {
+      border-left-color: var(--cp-link);
+    }
+
+    .legend .human {
+      border-left-color: var(--cp-warning);
+    }
+
+    .legend .agent {
+      border-left-color: var(--cp-accent);
+    }
+
+    .map {
+      display: grid;
+      gap: 16px;
+    }
+
+    .lane {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr);
+      gap: 16px;
+      padding: 18px;
+      border: 1px solid var(--cp-border);
+      border-radius: 16px;
+      background: var(--cp-surface);
+    }
+
+    .lane-title {
+      align-self: start;
+      color: var(--cp-accent);
+      font-weight: 800;
+    }
+
+    .flow {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 2px 2px 8px;
+    }
+
+    .node {
+      flex: 0 0 180px;
+      min-height: 116px;
+      padding: 14px;
+      border: 1px solid var(--cp-border);
+      border-top: 4px solid var(--cp-link);
+      border-radius: 0.625rem;
+      background: var(--cp-bg-elevated);
+    }
+
+    .node.human {
+      border-top-color: var(--cp-warning);
+    }
+
+    .node.agent {
+      border-top-color: var(--cp-accent);
+    }
+
+    .node.stop {
+      border-top-color: var(--cp-danger);
+    }
+
+    .node strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .node p {
+      margin: 0;
+      color: var(--cp-text-muted);
+      font-size: 0.9rem;
+    }
+
+    .arrow {
+      display: grid;
+      place-items: center;
+      flex: 0 0 24px;
+      color: var(--cp-border-strong);
+      font-size: 1.35rem;
+      font-weight: 800;
+    }
+
+    .callout {
+      margin-top: 20px;
+      padding: 16px 18px;
+      border: 1px solid var(--cp-border);
+      border-left: 5px solid var(--cp-accent);
+      border-radius: 0.625rem;
+      background: var(--cp-accent-soft);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--cp-border);
+      border-radius: 16px;
+      background: var(--cp-surface);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--cp-border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--cp-surface-soft);
+      font-size: 0.85rem;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .tutorial-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding: 14px 16px;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      background: var(--cp-surface);
+    }
+
+    .progress-track {
+      flex: 1;
+      height: 10px;
+      overflow: hidden;
+      border-radius: 0.625rem;
+      background: var(--cp-surface-soft);
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: var(--cp-accent);
+      transition: width 160ms ease;
+    }
+
+    .tutorials {
+      display: grid;
+      gap: 12px;
+    }
+
+    details {
+      border: 1px solid var(--cp-border);
+      border-radius: 16px;
+      background: var(--cp-surface);
+    }
+
+    summary {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 18px;
+      cursor: pointer;
+      font-weight: 800;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::before {
+      content: "＋";
+      color: var(--cp-accent);
+    }
+
+    details[open] summary::before {
+      content: "−";
+    }
+
+    .tutorial-body {
+      padding: 0 18px 18px;
+      border-top: 1px solid var(--cp-border);
+    }
+
+    .steps {
+      display: grid;
+      gap: 10px;
+      margin: 16px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      padding: 12px;
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      background: var(--cp-bg-elevated);
+    }
+
+    .step input {
+      width: 18px;
+      height: 18px;
+      margin: 3px 0 0;
+      accent-color: var(--cp-accent);
+    }
+
+    .step label {
+      cursor: pointer;
+    }
+
+    .step small {
+      display: block;
+      margin-top: 4px;
+      color: var(--cp-text-muted);
+    }
+
+    .expected {
+      margin-top: 14px;
+      padding: 14px;
+      border-left: 4px solid var(--cp-success);
+      background: var(--cp-surface-soft);
+    }
+
+    .danger-box {
+      margin-top: 14px;
+      padding: 14px;
+      border-left: 4px solid var(--cp-danger);
+      background: var(--cp-surface-soft);
+    }
+
+    .footer {
+      padding: 28px 0;
+      color: var(--cp-text-muted);
+      text-align: center;
+    }
+
+    @media (max-width: 760px) {
+      .section-head,
+      .lane {
+        grid-template-columns: 1fr;
+      }
+
+      .flow {
+        flex-direction: column;
+        overflow: visible;
+      }
+
+      .node {
+        flex-basis: auto;
+      }
+
+      .arrow {
+        transform: rotate(90deg);
+      }
+
+      .tutorial-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="#top">Actions 00~06 실행 지도</a>
+      <div class="actions">
+        <a
+          class="button"
+          href="https://github.com/hijigoo/dev-agent-workflow/actions"
+          target="_blank"
+          rel="noreferrer"
+        >Actions 열기</a>
+        <button class="button" id="theme-toggle" type="button">테마 전환</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="shell">
+        <p class="eyebrow">GitHub Actions · Cloud Agent Tutorial</p>
+        <h1>누가 호출하고,<br>어디서 멈추는지 한눈에</h1>
+        <p class="lead">
+          기존 00~03 개발·배포 흐름과 신규 04~06 수동 진단을 하나의 지도에 연결했습니다.
+          아래 튜토리얼에서 성공, Python 실패, CodeQL 실패, OSS 점검, branch 보안 검사,
+          프로젝트 E2E와 배포 승인 모드를 순서대로 확인할 수 있습니다.
+        </p>
+        <div class="badge-row">
+          <span class="badge accent">7 workflows</span>
+          <span class="badge">기존 00~03 유지</span>
+          <span class="badge">04~06 버튼 실행</span>
+          <span class="badge warning">사람이 Copilot 할당</span>
+          <span class="badge danger">자동 merge 없음</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="map">
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">End-to-end map</p>
+            <h2>모든 Action 호출 흐름</h2>
+          </div>
+          <p>
+            파란색은 GitHub Actions, 노란색은 사람 승인, 붉은색은 Cloud Agent 작업입니다.
+            04~06은 문제를 찾아도 PR을 직접 만들지 않고 Issue에서 멈춥니다.
+          </p>
+        </div>
+
+        <div class="legend" aria-label="흐름도 범례">
+          <span class="action">GitHub Actions</span>
+          <span class="human">사람의 선택·승인</span>
+          <span class="agent">Cloud Agent</span>
+        </div>
+
+        <div class="map">
+          <article class="lane">
+            <div class="lane-title">기능 개발·배포</div>
+            <div class="flow">
+              <div class="node human"><strong>Issue 등록</strong><p>사람이 Copilot을 Assignee로 선택</p></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>00 Setup</strong><p>Agent용 Python·Node·dependency 준비</p></div>
+              <div class="arrow">→</div>
+              <div class="node agent"><strong>Cloud Agent</strong><p>코드·테스트·Draft PR 생성</p></div>
+              <div class="arrow">→</div>
+              <div class="node human"><strong>Ready 전환</strong><p>사람이 PR 검증 시작</p></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>01 PR 1/2</strong><p>Python·Web·Playwright</p></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>01 PR 2/2</strong><p>CodeQL 보안 분석</p></div>
+              <div class="arrow">→</div>
+              <div class="node human"><strong>Review·Merge</strong><p>검증 성공 뒤 사람 승인</p></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>02 Main 1/3</strong><p>병합 SHA 전체 재평가</p></div>
+              <div class="arrow">→</div>
+              <div class="node human"><strong>02 Main 2/3</strong><p>Issue 알림·운영 승인 대기</p></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>02 Main 3/3</strong><p>승인 후 Azure 배포·health</p></div>
+            </div>
+          </article>
+
+          <article class="lane">
+            <div class="lane-title">실패 분기</div>
+            <div class="flow">
+              <div class="node"><strong>PR 1/2 실패</strong><p>exit code 1·summary에 실패 표시</p></div>
+              <div class="arrow">→</div>
+              <div class="node stop"><strong>PR 2/2 Skipped</strong><p>품질 실패 상태로 병합 차단</p></div>
+              <div class="arrow">→</div>
+              <div class="node agent"><strong>같은 PR 수정</strong><p>Copilot 요청 또는 직접 수정</p></div>
+              <div class="arrow">→</div>
+              <div class="node human"><strong>01 재실행</strong><p>PR head branch를 선택해 검증</p></div>
+            </div>
+          </article>
+
+          <article class="lane">
+            <div class="lane-title">03 정기·품질</div>
+            <div class="flow">
+              <div class="node"><strong>매주 Schedule</strong><p>main CodeQL만 실행</p></div>
+              <div class="arrow">↔</div>
+              <div class="node human"><strong>Run workflow</strong><p>수동 비식별 품질 리포트</p></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>저하 판정</strong><p>summary·artifact·검토 Issue</p></div>
+            </div>
+          </article>
+
+          <article class="lane">
+            <div class="lane-title">04 OSS 점검</div>
+            <div class="flow">
+              <div class="node human"><strong>Run workflow</strong><p>담당자가 버튼 실행</p></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>Registry 비교</strong><p>FastAPI·React 최신 stable</p></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>Agent-ready Issue</strong><p>업데이트가 있을 때 하나 생성·갱신</p></div>
+              <div class="arrow">→</div>
+              <div class="node human"><strong>Copilot 할당</strong><p>사람이 작업 시작 승인</p></div>
+              <div class="arrow">→</div>
+              <div class="node agent"><strong>Upgrade PR</strong><p>호환 수정·전체 테스트·PR</p></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>기존 01</strong><p>동일한 PR gate 재사용</p></div>
+            </div>
+          </article>
+
+          <article class="lane">
+            <div class="lane-title">05 Branch CodeQL</div>
+            <div class="flow">
+              <div class="node human"><strong>Branch 입력</strong><p>main 또는 개발·데모 branch</p></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>CodeQL 실행</strong><p>선택 branch 결과 업로드</p></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>보안 Issue</strong><p>경고가 있을 때 branch별 하나</p></div>
+              <div class="arrow">→</div>
+              <div class="node human"><strong>Copilot 할당</strong><p>Issue는 작업 요청서</p></div>
+              <div class="arrow">→</div>
+              <div class="node agent"><strong>Remediation PR</strong><p>root cause·회귀 테스트·PR</p></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>기존 01</strong><p>품질·E2E·CodeQL 재검증</p></div>
+            </div>
+          </article>
+
+          <article class="lane">
+            <div class="lane-title">06 Project E2E</div>
+            <div class="flow">
+              <div class="node human"><strong>Run workflow</strong><p>검사할 branch에서 실행</p></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>3 E2E</strong><p>예약·영어 Agent·한국어 분류</p></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>Summary·Artifact</strong><p>HTML·trace·screenshot·video</p></div>
+              <div class="arrow">→</div>
+              <div class="node stop"><strong>실패 시 Issue</strong><p>근거를 남긴 뒤 workflow 실패</p></div>
+              <div class="arrow">→</div>
+              <div class="node agent"><strong>Cloud Agent PR</strong><p>사람이 Copilot 할당 후 수정</p></div>
+            </div>
+          </article>
+        </div>
+
+        <div class="callout">
+          <strong>CodeQL Autofix와 Cloud Agent는 다릅니다.</strong>
+          PR의 지원되는 CodeQL 경고에는 Copilot Autofix가 국소 패치를 자동 제안할 수 있습니다.
+          여러 파일·호환성·회귀 테스트가 필요한 작업은 Issue를 Copilot에 할당해 Cloud Agent가
+          별도 PR로 처리합니다.
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="catalog">
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Trigger catalog</p>
+            <h2>무엇이 각 workflow를 호출하나</h2>
+          </div>
+          <p>04~06은 자동 감지가 아니라 운영자가 필요할 때 버튼으로 현재 상태를 검사합니다.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>번호</th>
+                <th>호출 조건</th>
+                <th>실행 내용</th>
+                <th>최종 산출물·중단점</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>00</strong></td><td>수동·관련 setup 파일 변경</td><td>Cloud Agent 개발 환경 설치</td><td>설치 로그</td></tr>
+              <tr><td><strong>01</strong></td><td>PR Ready for review·수동</td><td>Python·Web·E2E 후 CodeQL</td><td>Check·summary·artifact·병합 gate</td></tr>
+              <tr><td><strong>02</strong></td><td>main push·수동</td><td>재평가, 승인 알림, Azure 배포</td><td>사람 승인 또는 안전한 skip</td></tr>
+              <tr><td><strong>03</strong></td><td>주간 schedule·수동</td><td>schedule은 CodeQL, 수동은 품질 report</td><td>Code scanning 또는 품질 Issue</td></tr>
+              <tr><td><strong>04</strong></td><td>수동 버튼만</td><td>FastAPI·React stable 비교</td><td>summary·Agent-ready Issue</td></tr>
+              <tr><td><strong>05</strong></td><td>수동 버튼 + target_branch</td><td>선택 branch CodeQL</td><td>Code scanning·보안 Issue</td></tr>
+              <tr><td><strong>06</strong></td><td>수동 버튼만</td><td>프로젝트 Playwright 3개</td><td>summary·artifact·실패 Issue</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="tutorial">
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Hands-on tutorial</p>
+            <h2>모든 모드 테스트하기</h2>
+          </div>
+          <p>
+            체크박스는 이 브라우저에 저장됩니다. 고의 실패·취약점 PR은 절대 병합하지 말고
+            고객 시연이 끝난 뒤 닫아야 합니다.
+          </p>
+        </div>
+
+        <div class="tutorial-toolbar">
+          <strong id="progress-label">0 / 0 완료</strong>
+          <div class="progress-track" aria-hidden="true">
+            <div class="progress-bar" id="progress-bar"></div>
+          </div>
+          <button class="button" id="reset-progress" type="button">체크 초기화</button>
+        </div>
+
+        <div class="tutorials">
+          <details open>
+            <summary>준비 · 신규 04~06을 default branch에 반영</summary>
+            <div class="tutorial-body">
+              <ul class="steps">
+                <li class="step"><input type="checkbox" id="s00-1"><label for="s00-1">신규 workflow 변경 PR을 기존 01로 검증합니다.<small>04~06 Run workflow 버튼은 YAML이 default branch에 병합된 뒤 표시됩니다.</small></label></li>
+                <li class="step"><input type="checkbox" id="s00-2"><label for="s00-2">리뷰어가 신규 권한과 Issue 경계를 확인한 뒤 병합합니다.<small>자동 merge는 사용하지 않습니다.</small></label></li>
+                <li class="step"><input type="checkbox" id="s00-3"><label for="s00-3">Repository Actions에서 00~06이 모두 보이는지 확인합니다.</label></li>
+              </ul>
+            </div>
+          </details>
+
+          <details>
+            <summary>모드 1 · 00 Cloud Agent Setup</summary>
+            <div class="tutorial-body">
+              <ul class="steps">
+                <li class="step"><input type="checkbox" id="s01-1"><label for="s01-1">Actions → <strong>00 · Cloud Agent — Reproducible Setup</strong>을 엽니다.</label></li>
+                <li class="step"><input type="checkbox" id="s01-2"><label for="s01-2"><strong>Run workflow</strong> → main을 선택해 실행합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s01-3"><label for="s01-3">Python 3.12, Node 22, API·Web dependency 설치가 모두 성공인지 확인합니다.</label></li>
+              </ul>
+              <div class="expected"><strong>예상:</strong> 제품 테스트·배포 없이 setup job 하나가 성공합니다.</div>
+            </div>
+          </details>
+
+          <details>
+            <summary>모드 2 · 01 정상 PR 검증</summary>
+            <div class="tutorial-body">
+              <ul class="steps">
+                <li class="step"><input type="checkbox" id="s02-1"><label for="s02-1">안전한 문서 변경 branch로 Draft PR을 만듭니다.<small>Draft에서는 01 run이 생성되지 않아야 합니다.</small></label></li>
+                <li class="step"><input type="checkbox" id="s02-2"><label for="s02-2">PR을 <strong>Ready for review</strong>로 전환합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s02-3"><label for="s02-3">PR 1/2에서 Python·Web·Playwright, PR 2/2에서 CodeQL이 순서대로 성공하는지 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s02-4"><label for="s02-4">Job Summary와 Playwright artifact를 확인하고 PR을 닫습니다.</label></li>
+              </ul>
+              <div class="expected"><strong>예상:</strong> 두 job과 별도 CodeQL check가 모두 통과합니다.</div>
+            </div>
+          </details>
+
+          <details>
+            <summary>모드 3 · Python 테스트 실패 감지</summary>
+            <div class="tutorial-body">
+              <ul class="steps">
+                <li class="step"><input type="checkbox" id="s03-1"><label for="s03-1"><a href="https://github.com/hijigoo/dev-agent-workflow/pull/20" target="_blank" rel="noreferrer">고의 Python 실패 데모 PR</a>을 엽니다.</label></li>
+                <li class="step"><input type="checkbox" id="s03-2"><label for="s03-2">PR 1/2 log에서 assertion과 <code>Process completed with exit code 1</code>을 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s03-3"><label for="s03-3">Summary가 Python 실패, Web·E2E 미실행을 표시하는지 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s03-4"><label for="s03-4">PR 2/2가 <strong>Skipped</strong>, PR이 병합 불안정 상태인지 확인합니다.</label></li>
+              </ul>
+              <div class="danger-box"><strong>주의:</strong> 고의 실패 테스트가 포함되어 있으므로 절대 병합하지 않습니다.</div>
+            </div>
+          </details>
+
+          <details>
+            <summary>모드 4 · PR CodeQL 실패와 Copilot Autofix</summary>
+            <div class="tutorial-body">
+              <ul class="steps">
+                <li class="step"><input type="checkbox" id="s04-1"><label for="s04-1"><a href="https://github.com/hijigoo/dev-agent-workflow/pull/18" target="_blank" rel="noreferrer">고의 SQL Injection 데모 PR</a>을 엽니다.</label></li>
+                <li class="step"><input type="checkbox" id="s04-2"><label for="s04-2">PR 1/2와 PR 2/2 job은 성공하지만 별도 CodeQL check는 High 1건으로 실패하는지 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s04-3"><label for="s04-3">Files changed의 코드 annotation과 지원되는 경우 Copilot Autofix 제안을 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s04-4"><label for="s04-4">PR 경고는 main 기본 Code scanning 목록이 아니라 PR filter/check 중심임을 확인합니다.</label></li>
+              </ul>
+              <div class="danger-box"><strong>주의:</strong> 실제 취약 코드가 포함된 교육용 PR입니다. Autofix도 검토 없이 적용·병합하지 않습니다.</div>
+            </div>
+          </details>
+
+          <details>
+            <summary>모드 5 · 02 Main 재평가와 배포 승인</summary>
+            <div class="tutorial-body">
+              <ul class="steps">
+                <li class="step"><input type="checkbox" id="s05-1"><label for="s05-1">Repository variable <code>ACA_DEPLOYMENT_ENABLED=false</code>를 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s05-2"><label for="s05-2">Actions → 02를 main에서 수동 실행합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s05-3"><label for="s05-3">Main 1/3은 성공하고 Main 2/3·3/3은 정상 Skipped되는지 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s05-4"><label for="s05-4">실제 Azure·OIDC·production reviewer가 준비된 환경에서만 flag를 true로 바꾸고 승인 대기를 테스트합니다.</label></li>
+              </ul>
+              <div class="danger-box"><strong>비용 주의:</strong> flag=true 승인 후에는 ACR·Container Apps 리소스가 변경되고 Azure 사용료가 발생할 수 있습니다.</div>
+            </div>
+          </details>
+
+          <details>
+            <summary>모드 6 · 03 수동 품질 리포트와 예약 CodeQL</summary>
+            <div class="tutorial-body">
+              <ul class="steps">
+                <li class="step"><input type="checkbox" id="s06-1"><label for="s06-1">Actions → 03 → Run workflow를 실행합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s06-2"><label for="s06-2">수동 실행에서는 품질 report가 실행되고 Scheduled CodeQL은 Skipped되는지 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s06-3"><label for="s06-3">Job Summary, 30일 artifact, 저하가 있으면 품질 Issue를 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s06-4"><label for="s06-4">예약 CodeQL은 다음 화요일 17:43 UTC schedule run에서 확인합니다.<small>workflow_dispatch는 schedule event를 흉내 내지 않으므로 버튼으로 예약 분기를 실행할 수 없습니다.</small></label></li>
+              </ul>
+            </div>
+          </details>
+
+          <details>
+            <summary>모드 7 · 04 OSS 최신 버전 점검</summary>
+            <div class="tutorial-body">
+              <ul class="steps">
+                <li class="step"><input type="checkbox" id="s07-1"><label for="s07-1">Actions → 04 → Run workflow를 main에서 실행합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s07-2"><label for="s07-2">Summary에서 FastAPI 현재 최소 버전과 React·React DOM lock 버전을 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s07-3"><label for="s07-3">업데이트가 있으면 <code>agent-ready</code> Issue 하나가 생성·갱신되는지 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s07-4"><label for="s07-4">Issue를 Copilot에 할당해 upgrade·호환 수정·전체 테스트·Draft PR 생성을 확인합니다.</label></li>
+              </ul>
+              <div class="expected"><strong>경계:</strong> 04 Actions는 manifest를 직접 수정하지 않습니다. PR은 Cloud Agent가 만듭니다.</div>
+            </div>
+          </details>
+
+          <details>
+            <summary>모드 8 · 05 선택 branch CodeQL과 보안 Issue</summary>
+            <div class="tutorial-body">
+              <ul class="steps">
+                <li class="step"><input type="checkbox" id="s08-1"><label for="s08-1">Actions → 05 → Run workflow를 엽니다.</label></li>
+                <li class="step"><input type="checkbox" id="s08-2"><label for="s08-2"><code>target_branch</code>에 <code>demo/codeql-summary-report</code>를 입력해 실행합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s08-3"><label for="s08-3">Summary의 High 건수와 Security → Code scanning의 branch filter 링크를 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s08-4"><label for="s08-4">branch별 Agent-ready 보안 Issue 하나가 생성·갱신되는지 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s08-5"><label for="s08-5">Issue를 Copilot에 할당해 root cause 수정·회귀 테스트·별도 PR 생성을 확인합니다.</label></li>
+              </ul>
+              <div class="danger-box"><strong>주의:</strong> 데모 branch는 의도적 SQL Injection을 포함합니다. main으로 병합하지 않습니다.</div>
+            </div>
+          </details>
+
+          <details>
+            <summary>모드 9 · 06 프로젝트 E2E 성공·실패</summary>
+            <div class="tutorial-body">
+              <ul class="steps">
+                <li class="step"><input type="checkbox" id="s09-1"><label for="s09-1">Actions → 06 → Run workflow를 main에서 실행합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s09-2"><label for="s09-2">예약 UI, 영어 Mini Agent, 한국어 room-search 3개가 성공하는지 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s09-3"><label for="s09-3">scenario별 Summary와 Playwright HTML·trace·screenshot·video artifact를 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s09-4"><label for="s09-4">실패 모드는 main에서 새 데모 branch를 만든 뒤 <code>platform.spec.ts</code> expectation 하나를 의도적으로 틀리게 바꾸고, Actions의 branch 선택에서 그 branch로 06을 실행합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s09-5"><label for="s09-5">실패 evidence·Agent-ready E2E Issue가 먼저 생성되고 workflow가 마지막에 실패하는지 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s09-6"><label for="s09-6">데모 branch와 Issue를 정리하고 절대 병합하지 않습니다.</label></li>
+              </ul>
+            </div>
+          </details>
+
+          <details>
+            <summary>마무리 · Cloud Agent PR의 공통 검증</summary>
+            <div class="tutorial-body">
+              <ul class="steps">
+                <li class="step"><input type="checkbox" id="s10-1"><label for="s10-1">04·05·06 Issue를 Copilot에 할당해 만든 PR이 Draft인지 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s10-2"><label for="s10-2">사람이 기능·보안·의존성 변경과 test evidence를 검토합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s10-3"><label for="s10-3">Ready 전환 후 기존 01 전체 검증을 통과해야만 승인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s10-4"><label for="s10-4">고의 실패·취약점 PR과 임시 branch를 모두 닫고 삭제합니다.</label></li>
+              </ul>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="shell">GitHub Actions 00~06 실행 지도 · 모든 변경은 사람의 승인 뒤 병합</div>
+  </footer>
+
+  <script>
+    const themeToggle = document.querySelector("#theme-toggle");
+    themeToggle.addEventListener("click", () => {
+      const next =
+        document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+    });
+
+    const checkboxes = [...document.querySelectorAll('.step input[type="checkbox"]')];
+    const progressLabel = document.querySelector("#progress-label");
+    const progressBar = document.querySelector("#progress-bar");
+    const storageKey = "github-actions-tutorial-progress";
+
+    function readProgress() {
+      try {
+        return JSON.parse(localStorage.getItem(storageKey) || "{}");
+      } catch {
+        return {};
+      }
+    }
+
+    function updateProgress() {
+      const completed = checkboxes.filter((checkbox) => checkbox.checked).length;
+      const percent = checkboxes.length ? (completed / checkboxes.length) * 100 : 0;
+      progressLabel.textContent = `${completed} / ${checkboxes.length} 완료`;
+      progressBar.style.width = `${percent}%`;
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify(
+          Object.fromEntries(checkboxes.map((checkbox) => [checkbox.id, checkbox.checked])),
+        ),
+      );
+    }
+
+    const saved = readProgress();
+    checkboxes.forEach((checkbox) => {
+      checkbox.checked = Boolean(saved[checkbox.id]);
+      checkbox.addEventListener("change", updateProgress);
+    });
+
+    document.querySelector("#reset-progress").addEventListener("click", () => {
+      checkboxes.forEach((checkbox) => {
+        checkbox.checked = false;
+      });
+      updateProgress();
+    });
+
+    updateProgress();
+  </script>
+</body>
+</html>

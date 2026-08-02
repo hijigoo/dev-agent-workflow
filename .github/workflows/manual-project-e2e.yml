@@ -1,0 +1,146 @@
+name: "06 · Manual — Project E2E"
+run-name: "06 · Project E2E · ${{ github.ref_name }} · ${{ github.sha }}"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: manual-project-e2e-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    name: Run meeting and Mini Agent browser scenarios
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install API dependencies
+        run: python -m pip install -e 'apps/api[test]'
+      - name: Install Web and Chromium dependencies
+        working-directory: apps/web
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - id: e2e
+        name: Run the three project Playwright scenarios
+        continue-on-error: true
+        working-directory: apps/web
+        env:
+          PLAYWRIGHT_HTML_OPEN: never
+          PLAYWRIGHT_JSON_OUTPUT_NAME: e2e-results.json
+        run: npx playwright test --reporter=html,json
+      - id: report
+        name: Write project E2E summary
+        if: always()
+        env:
+          E2E_OUTCOME: ${{ steps.e2e.outcome }}
+        run: |
+          python scripts/summarize_playwright.py \
+            --input apps/web/e2e-results.json \
+            --runner-outcome "$E2E_OUTCOME" \
+            --sha "$GITHUB_SHA"
+          cat e2e-report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload Playwright evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: project-e2e-${{ github.ref_name }}-${{ github.sha }}
+          if-no-files-found: warn
+          path: |
+            e2e-report.md
+            apps/web/playwright-report/
+            apps/web/test-results/
+            apps/web/e2e-results.json
+          retention-days: 30
+      - id: issue
+        name: Create or update one Agent-ready E2E Issue
+        if: always() && steps.report.outputs.failed_count != '0'
+        uses: actions/github-script@v9
+        env:
+          REPORT_PATH: ${{ steps.report.outputs.report_path }}
+          TARGET_BRANCH: ${{ github.ref_name }}
+          TARGET_SHA: ${{ github.sha }}
+        with:
+          script: |
+            const fs = require("fs");
+            const { owner, repo } = context.repo;
+            const markerKey = Buffer.from(process.env.TARGET_BRANCH).toString("base64url");
+            const marker = `<!-- manual-project-e2e:${markerKey} -->`;
+            const report = fs.readFileSync(process.env.REPORT_PATH, "utf8");
+            const runUrl =
+              `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}` +
+              `/actions/runs/${process.env.GITHUB_RUN_ID}`;
+            const body = `${marker}
+            ${report}
+
+            ## 실행 근거
+            - [Actions 실행과 Playwright artifact](${runUrl})
+
+            ## Cloud Agent 작업
+            1. 이 Issue를 Copilot에 할당합니다.
+            2. 실패한 scenario와 trace·screenshot·video를 먼저 재현합니다.
+            3. product, environment, data, nondeterministic failure 중 원인을 분류합니다.
+            4. retry·threshold 완화로 숨기지 말고 최소 root-cause 수정과 regression test를
+               작성합니다.
+            5. 프로젝트의 Python·Web·Playwright 검증 후 draft PR을 생성합니다.
+
+            ## 개인정보·안전 조건
+            원문 prompt, transcript, 사용자 식별자, 이메일, 전화번호, secret을 Issue나
+            artifact에 추가하지 말고 자동 병합하지 마세요.`;
+
+            const open = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: "open",
+              per_page: 100,
+            });
+            const existing = open.find(
+              (item) => !item.pull_request && item.body?.includes(marker),
+            );
+            const title = `[E2E] ${process.env.TARGET_BRANCH} 프로젝트 회귀 조치`;
+            let issue;
+            if (existing) {
+              issue = await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: existing.number,
+                title,
+                body,
+                labels: ["agent-ready", "quality-regression"],
+              });
+              core.info(`Updated Issue #${existing.number}`);
+            } else {
+              issue = await github.rest.issues.create({
+                owner,
+                repo,
+                title,
+                body,
+                labels: ["agent-ready", "quality-regression"],
+              });
+              core.info(`Created Issue #${issue.data.number}`);
+            }
+            core.setOutput("issue_url", issue.data.html_url);
+      - name: Add Issue link to summary
+        if: steps.issue.outputs.issue_url != ''
+        env:
+          ISSUE_URL: ${{ steps.issue.outputs.issue_url }}
+        run: printf '\n- **Agent-ready E2E Issue:** %s\n' "$ISSUE_URL" >> "$GITHUB_STEP_SUMMARY"
+      - name: Fail workflow when project E2E failed
+        if: steps.report.outputs.failed_count != '0'
+        run: |
+          echo "Project E2E failed. Review the summary, artifact, and Agent-ready Issue."
+          exit 1

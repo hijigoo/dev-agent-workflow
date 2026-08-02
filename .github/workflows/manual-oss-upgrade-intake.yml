@@ -1,0 +1,106 @@
+name: "04 · Manual — OSS Upgrade Intake"
+run-name: "04 · OSS upgrade intake · ${{ github.sha }}"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: manual-oss-upgrade-intake
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    name: Check FastAPI and React releases
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - id: releases
+        name: Compare repository and stable registry versions
+        run: python scripts/check_oss_updates.py
+      - name: Write upgrade summary
+        run: cat oss-upgrade-report.md >> "$GITHUB_STEP_SUMMARY"
+      - id: issue
+        name: Create or update one Agent-ready upgrade Issue
+        if: steps.releases.outputs.update_count != '0'
+        uses: actions/github-script@v9
+        env:
+          REPORT_PATH: ${{ steps.releases.outputs.report_path }}
+          UPDATES: ${{ steps.releases.outputs.updates }}
+        with:
+          script: |
+            const fs = require("fs");
+            const { owner, repo } = context.repo;
+            const marker = "<!-- manual-oss-upgrade-intake -->";
+            const report = fs.readFileSync(process.env.REPORT_PATH, "utf8");
+            const updates = JSON.parse(process.env.UPDATES);
+            const releaseLinks = updates
+              .map((item) => `- [${item.display_name} ${item.latest_version}](${item.release_url})`)
+              .join("\n");
+            const body = `${marker}
+            ${report}
+
+            ## 최신 릴리즈
+            ${releaseLinks}
+
+            ## Cloud Agent 작업
+            1. 이 Issue를 Copilot에 할당합니다.
+            2. \`apps/api/pyproject.toml\`, \`apps/web/package.json\`,
+               \`apps/web/package-lock.json\` 중 해당 manifest를 최신 stable로 갱신합니다.
+            3. upstream breaking change와 이 프로젝트의 호환 영향을 확인하고 필요한
+               코드만 수정합니다.
+            4. 다음 regression 검증을 수행한 뒤 draft PR을 생성합니다.
+               - \`python -m pytest apps/api/tests tests\`
+               - \`cd apps/web && npm run lint && npm test && npm run build\`
+               - \`cd apps/web && npm run test:e2e\`
+
+            ## 안전 조건
+            기존 검증을 약화하거나 자동 병합하지 마세요. 호환되지 않는 major upgrade,
+            인증·권한·secret 변경은 사람에게 결정을 요청하세요.
+
+            ## 실행 근거
+            ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+
+            const open = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: "open",
+              per_page: 100,
+            });
+            const existing = open.find(
+              (item) => !item.pull_request && item.body?.includes(marker),
+            );
+            let issue;
+            if (existing) {
+              issue = await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: existing.number,
+                title: "[업그레이드] FastAPI·React 최신 stable 반영",
+                body,
+                labels: ["agent-ready", "enhancement"],
+              });
+              core.info(`Updated Issue #${existing.number}`);
+            } else {
+              issue = await github.rest.issues.create({
+                owner,
+                repo,
+                title: "[업그레이드] FastAPI·React 최신 stable 반영",
+                body,
+                labels: ["agent-ready", "enhancement"],
+              });
+              core.info(`Created Issue #${issue.data.number}`);
+            }
+            core.setOutput("issue_url", issue.data.html_url);
+      - name: Add Issue link to summary
+        if: steps.issue.outputs.issue_url != ''
+        env:
+          ISSUE_URL: ${{ steps.issue.outputs.issue_url }}
+        run: printf '\n- **Agent-ready Issue:** %s\n' "$ISSUE_URL" >> "$GITHUB_STEP_SUMMARY"
