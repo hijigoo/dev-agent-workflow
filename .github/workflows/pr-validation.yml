@@ -41,4 +41,99 @@ jobs:
       - uses: github/codeql-action/init@v4
         with:
           languages: python,javascript-typescript
-      - uses: github/codeql-action/analyze@v4
+      - id: codeql_analyze
+        name: Analyze and upload CodeQL results
+        uses: github/codeql-action/analyze@v4
+      - name: Write CodeQL summary
+        if: always()
+        shell: bash
+        env:
+          ANALYZE_OUTCOME: ${{ steps.codeql_analyze.outcome }}
+          SARIF_DIRECTORY: ${{ steps.codeql_analyze.outputs.sarif-output }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          format_result() {
+            case "$1" in
+              success) printf '✅ 분석 및 업로드 성공' ;;
+              failure) printf '❌ 분석 또는 업로드 실패' ;;
+              cancelled) printf '⏹️ 취소' ;;
+              skipped|"") printf '⏭️ 미실행' ;;
+              *) printf '%s' "$1" ;;
+            esac
+          }
+
+          if [[ -n "$PR_NUMBER" ]]; then
+            results_query="pr%3A${PR_NUMBER}+tool%3ACodeQL+is%3Aopen"
+          else
+            results_query="tool%3ACodeQL+is%3Aopen"
+          fi
+          results_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/security/code-scanning?query=${results_query}"
+
+          sarif_files=()
+          if [[ -n "$SARIF_DIRECTORY" && -d "$SARIF_DIRECTORY" ]]; then
+            while IFS= read -r -d '' file; do
+              sarif_files+=("$file")
+            done < <(find "$SARIF_DIRECTORY" -type f -name '*.sarif' -print0)
+          fi
+
+          total="N/A"
+          critical="N/A"
+          high="N/A"
+          medium="N/A"
+          low="N/A"
+          other="N/A"
+
+          if (( ${#sarif_files[@]} > 0 )); then
+            findings="$(
+              jq -s '
+                [
+                  .[] |
+                  .runs[]? as $run |
+                  $run.results[]? as $result |
+                  (
+                    [
+                      $run.tool.driver.rules[]? |
+                      select(.id == $result.ruleId)
+                    ][0].properties["security-severity"] // null
+                  ) as $score |
+                  {
+                    score: (
+                      if $score == null
+                      then null
+                      else (try ($score | tonumber) catch null)
+                      end
+                    ),
+                    level: ($result.level // "none")
+                  }
+                ]
+              ' "${sarif_files[@]}"
+            )"
+            total="$(jq 'length' <<<"$findings")"
+            critical="$(jq '[.[] | select(.score != null and .score >= 9)] | length' <<<"$findings")"
+            high="$(jq '[.[] | select(.score != null and .score >= 7 and .score < 9)] | length' <<<"$findings")"
+            medium="$(jq '[.[] | select(.score != null and .score >= 4 and .score < 7)] | length' <<<"$findings")"
+            low="$(jq '[.[] | select(.score != null and .score > 0 and .score < 4)] | length' <<<"$findings")"
+            other="$(jq '[.[] | select(.score == null or .score == 0)] | length' <<<"$findings")"
+          fi
+
+          {
+            echo "## PR 2/2 · CodeQL security"
+            echo
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Ref: \`$GITHUB_REF\`"
+            echo "- Languages: \`python\`, \`javascript-typescript\`"
+            echo "- Analysis: $(format_result "$ANALYZE_OUTCOME")"
+            echo
+            echo "| SARIF 분석 결과 | 건수 |"
+            echo "|---|---:|"
+            echo "| 전체 | $total |"
+            echo "| Critical | $critical |"
+            echo "| High | $high |"
+            echo "| Medium | $medium |"
+            echo "| Low | $low |"
+            echo "| 기타 품질 경고 | $other |"
+            echo
+            echo "[CodeQL 경고 상세 보기]($results_url)"
+            echo
+            echo "> 이 표는 이번 분석에서 생성된 SARIF 결과입니다. PR에서 새로 추가된 경고와 병합 차단 여부는 별도 **CodeQL** check가 최종 판정합니다."
+          } >> "$GITHUB_STEP_SUMMARY"
