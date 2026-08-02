@@ -1,8 +1,14 @@
-# GitHub Cloud Agent 개발 파이프라인 Demo
+# Cloud Agent + GitHub Actions 기반 Agentic DevOps Demo
 
-GitHub Copilot cloud agent를 개인용 코딩 도구가 아니라 팀 개발 프로세스의 한 구성원으로
-편입하는 **파이프라인 데모**입니다. 저장소의 회의실·Mini Agent 앱은 이 파이프라인에서
-개발, 회귀 테스트, 보안 분석, 승인, 배포가 어떻게 연결되는지 검증하기 위한 샘플입니다.
+GitHub Copilot Cloud Agent가 팀원처럼 개발 과업을 수행하고, GitHub Actions가 과업
+발견부터 변경 검증·사람의 승인·운영 배포까지 통제하는 **Agentic DevOps 데모**입니다.
+저장소의 회의실·Mini Agent 앱은 이 운영 모델을 끝까지 검증하기 위한 샘플 대상입니다.
+
+| 주체 | Agentic DevOps에서의 역할 |
+|---|---|
+| 사람 | 과업 선택·Copilot 할당, 기능/보안 리뷰, 병합과 운영 배포 승인 |
+| Cloud Agent | 격리된 환경에서 코드·dependency 수정, 테스트, draft PR 생성 |
+| GitHub Actions | OSS·보안·E2E 진단, PR 독립 검증, 결과 보고, 승인 gate, 배포 |
 
 핵심 시연 흐름은 다음과 같습니다.
 
@@ -16,23 +22,22 @@ GitHub Copilot cloud agent를 개인용 코딩 도구가 아니라 팀 개발 �
 
 > Cloud agent는 PR을 자동 승인하거나 병합하지 않습니다. 이 샘플도 모든 자동화의 종착점을 Issue 또는 draft PR로 제한합니다.
 
-## 파이프라인 한눈에 보기
+## Agentic DevOps 전체 흐름
 
 ```mermaid
 flowchart TD
-    issue["Jira / GitHub Issue"] --> assign["사람이 Issue를 Copilot에 할당"]
-    assign --> setup["00 · Cloud Agent Setup<br/>Python · Node · 의존성 준비"]
-    setup --> agent["Cloud Agent<br/>구현 · 단위/회귀 테스트"]
-    agent --> draft["Draft PR 생성"]
-    draft --> ready["사람이 Ready for review로 전환"]
-    ready --> quality["01 · PR 1/2<br/>Python · React · Playwright"]
+    issue["Jira / GitHub Issue<br/>개발 과업 또는 Actions 진단 결과"] --> assign["사람<br/>Issue를 Copilot에 할당"]
+    assign --> setup["GitHub Actions 00<br/>Cloud Agent 재현 환경 준비"]
+    setup --> agent["Cloud Agent<br/>구현 · 단위/회귀 테스트 · Draft PR"]
+    agent --> ready["사람<br/>계획과 변경 범위 확인 · Ready 전환"]
+    ready --> quality["GitHub Actions 01 · PR 1/2<br/>Python · React · Playwright"]
     quality -->|"성공"| codeql["01 · PR 2/2<br/>CodeQL"]
-    quality -->|"실패"| fix["Cloud Agent가 원인 수정"]
+    quality -->|"실패"| fix["Cloud Agent<br/>검증 근거로 원인 수정"]
     codeql -->|"경고 또는 실패"| fix
-    fix --> draft
+    fix --> ready
     codeql -->|"성공"| review["사람이 기능·보안 리뷰 및 병합 승인"]
     review --> merge["main 병합"]
-    merge --> evaluate["02 · Main 1/3<br/>병합 SHA 재평가"]
+    merge --> evaluate["GitHub Actions 02 · Main 1/3<br/>병합 SHA 재평가"]
     evaluate --> enabled{"ACA 배포 활성화?"}
     enabled -->|"아니요"| skip["승인 알림·배포 정상 Skip"]
     enabled -->|"예"| notice["02 · Main 2/3<br/>원본 Issue에 승인 링크"]
@@ -41,7 +46,7 @@ flowchart TD
     deploy --> smoke["Web · API HTTPS smoke"]
 ```
 
-## Actions 00~05 역할
+## Agentic DevOps를 구성하는 Actions 00~05
 
 | 번호 | Workflow | 시작 조건 | 수행 작업 | 결과 |
 |---|---|---|---|---|
