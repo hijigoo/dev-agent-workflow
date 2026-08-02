@@ -24,14 +24,14 @@ GitHub Copilot Cloud Agent가 팀원처럼 개발 과업을 수행하고, GitHub
 
 ## Agentic DevOps Actions 00~05 한눈에 보기
 
-| 번호 | Workflow | 시작 조건 | 수행 작업 | 결과 |
-|---|---|---|---|---|
-| 00 | Cloud Agent — Reproducible Setup | Copilot coding agent job | Python·Node·프로젝트 의존성 설치 | Agent가 같은 환경에서 개발·테스트 |
-| 01 | PR Validation — Quality and CodeQL | PR을 Ready for review로 전환하거나 수동 실행 | Python·React·Playwright 회귀 테스트 후 CodeQL | required check와 Job Summary, 실패 artifact |
-| 02 | Production Deployment — Evaluate, Approve, Deploy | `main` 병합 | 병합 결과 재검증(main에 실제 반영된 코드 다시 테스트), production 승인, OIDC 기반 ACA 배포 | 승인 전 대기 또는 Web·API smoke 결과 |
-| 03 | Manual — OSS Upgrade Intake | 담당자가 Run workflow 실행 | FastAPI·React/React DOM의 현재 버전과 최신 stable 비교 | 최신 상태 summary 또는 Agent-ready Issue |
-| 04 | Manual — Branch CodeQL Remediation | 담당자가 branch를 선택해 Run workflow 실행 | 선택 시점의 branch 코드(commit)를 고정해 CodeQL 분석 | 보안 summary와 branch별 Agent-ready Issue |
-| 05 | Manual — Project E2E | 담당자가 branch를 선택해 Run workflow 실행 | API·Web 기동 후 예약·영어/한국어 Mini Agent Playwright 실행 | HTML report·trace와 실패 시 Agent-ready Issue |
+| Action | 핵심 역할 | 결과 |
+|---|---|---|
+| 00 · Cloud Agent 준비 | 동일한 Python·Node 개발 환경 구성 | Agent 개발·테스트와 Draft PR |
+| 01 · PR 검증 | 품질·E2E·CodeQL 독립 검증 | required checks와 검증 근거 |
+| 02 · 운영 배포 | 병합 결과 재검증·사람 승인·ACA 배포 | Web·API 배포와 smoke 결과 |
+| 03 · OSS 점검 | FastAPI·React 최신 stable 비교 | Summary 또는 업그레이드 Issue |
+| 04 · Branch CodeQL | 선택 branch 보안 분석 | Security 결과 또는 보안 Issue |
+| 05 · Project E2E | 예약·Mini Agent 브라우저 검증 | Playwright report 또는 회귀 Issue |
 
 ## Actions 00~05 상세 흐름
 
