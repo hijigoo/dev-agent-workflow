@@ -66,72 +66,6 @@ sequenceDiagram
 | 04 | Manual — Branch CodeQL Remediation | 담당자가 branch를 선택해 Run workflow 실행 | 고정한 branch SHA를 Python·JavaScript/TypeScript CodeQL로 분석 | 보안 summary와 branch별 Agent-ready Issue |
 | 05 | Manual — Project E2E | 담당자가 branch를 선택해 Run workflow 실행 | API·Web 기동 후 예약·영어/한국어 Mini Agent Playwright 실행 | HTML report·trace와 실패 시 Agent-ready Issue |
 
-## 샘플 프로젝트 구성
-
-```text
-apps/
-  api/                  FastAPI 회의실 예약·비식별 품질 지표 API
-  web/                  회의실·Mini Agent 테스트 앱
-scripts/                OSS·CodeQL·E2E 리포트 helper
-tests/                  자동화 스크립트 테스트
-scenarios/              고객 실습용 과업·테스트 시나리오
-.github/
-  agents/               Security/E2E custom agents
-  workflows/            CI, CodeQL, E2E, 평가·승인·ACA 배포 workflow
-infra/                   ACR·Container Apps·managed identity Bicep
-docs/                    Azure OIDC와 production 승인 설정 가이드
-```
-
-현재 GitHub Actions 00~05 호출 흐름과 전체 테스트 튜토리얼은
-[`github-actions-tutorial.html`](github-actions-tutorial.html)에서 확인합니다.
-Agentic DLC 실습과 평가표는
-[`scenarios/agentic-dlc-scenarios.md`](scenarios/agentic-dlc-scenarios.md)를 사용합니다.
-브라우저의 **Mini Agent** 화면은 별도 model/API key 없이 즉시 실행됩니다.
-
-## 샘플 프로젝트 실행
-
-### Docker Compose
-
-```bash
-docker compose up --build
-```
-
-- Web: <http://localhost:5173>
-- Meeting API docs: <http://localhost:8000/docs>
-
-### 로컬 프로세스
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e 'apps/api[test]'
-
-uvicorn meeting_api.main:app --app-dir apps/api --reload --port 8000
-
-cd apps/web
-npm ci
-npm run dev
-```
-
-## 샘플 프로젝트 테스트
-
-```bash
-python -m pytest apps/api/tests tests
-cd apps/web
-npm ci
-npm run lint
-npm test
-npm run build
-npm run test:e2e
-```
-
-E2E 최초 실행 전:
-
-```bash
-cd apps/web
-npx playwright install chromium
-```
-
 ## Cloud Agent 사용
 
 ### GitHub Issue
@@ -317,3 +251,70 @@ Run workflow`에서 `main`을 선택해 다시 실행합니다. 배포 완료 �
 - ruleset의 required checks와 승인 수
 - `production` Environment의 required reviewer와 Azure OIDC federation
 - Azure resource group, region, required tags·Policy·quota
+
+## 참고: 샘플 프로젝트 사용 방법
+
+이 샘플 앱은 위 Agentic DevOps 파이프라인을 실행하고 결과를 확인하기 위한 테스트
+대상입니다. 브라우저의 **Mini Agent** 화면은 별도 model/API key 없이 실행됩니다.
+
+전체 고객 실습 순서는
+[`github-actions-tutorial.html`](github-actions-tutorial.html), Agentic DLC 과업과 평가표는
+[`scenarios/agentic-dlc-scenarios.md`](scenarios/agentic-dlc-scenarios.md)를 참고합니다.
+
+### 구성
+
+```text
+apps/
+  api/                  FastAPI 회의실 예약 API
+  web/                  회의실·Mini Agent 테스트 앱
+scripts/                OSS·CodeQL·E2E 리포트 helper
+tests/                  자동화 스크립트 테스트
+scenarios/              고객 실습용 과업·테스트 시나리오
+.github/
+  agents/               Security/E2E custom agents
+  workflows/            CI, CodeQL, E2E, 평가·승인·ACA 배포 workflow
+infra/                   ACR·Container Apps·managed identity Bicep
+docs/                    Azure OIDC와 production 승인 설정 가이드
+```
+
+### Docker Compose로 실행
+
+```bash
+docker compose up --build
+```
+
+- Web: <http://localhost:5173>
+- Meeting API docs: <http://localhost:8000/docs>
+
+### 로컬 프로세스로 실행
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e 'apps/api[test]'
+
+uvicorn meeting_api.main:app --app-dir apps/api --reload --port 8000
+
+cd apps/web
+npm ci
+npm run dev
+```
+
+### 테스트
+
+```bash
+python -m pytest apps/api/tests tests
+cd apps/web
+npm ci
+npm run lint
+npm test
+npm run build
+npm run test:e2e
+```
+
+E2E 최초 실행 전:
+
+```bash
+cd apps/web
+npx playwright install chromium
+```
