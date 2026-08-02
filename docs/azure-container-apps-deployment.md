@@ -124,32 +124,35 @@ Cloud Agent가 만든 workflow 변경은 사람이 diff를 확인하고 실행 �
 ## 6. 첫 배포
 
 1. Agent-ready Issue를 Copilot에 할당합니다.
-2. Agent PR의 테스트와 변경 범위를 검토합니다.
-3. 독립 reviewer가 승인한 PR을 `main`에 병합합니다.
-4. **Evaluate and deploy to Azure Container Apps** workflow를 엽니다.
-5. `Post-merge evaluation`의 테스트와 artifact를 확인합니다.
-6. `production` deployment를 승인합니다.
-7. workflow가 `AcrPull` 역할 전파를 확인한 뒤 image를 build하는지 확인합니다.
-8. job summary의 Website URL과 세 health check 결과를 확인합니다.
+2. Agent의 Draft PR 작업이 끝나면 사람이 **Ready for review**로 전환합니다.
+3. **01 · PR Validation**의 PR 1/2 품질 검증과 PR 2/2 CodeQL을 확인합니다.
+4. 독립 reviewer가 승인한 뒤 `ACA_DEPLOYMENT_ENABLED=true`로 변경하고 PR을
+   `main`에 병합합니다.
+5. **02 · Production Deployment**의 Main 1/3 테스트와 artifact를 확인합니다.
+6. Main 2/3 원본 Issue 승인 알림을 확인합니다.
+7. Main 3/3의 `production` deployment를 승인합니다.
+8. workflow가 `AcrPull` 역할 전파를 확인한 뒤 image를 build하는지 확인합니다.
+9. job summary의 Website URL과 Web·Meeting API health check 결과를 확인합니다.
 
-재실행이 필요하면 `workflow_dispatch`를 사용합니다. 모든 image는 commit SHA tag를
-사용하므로 실행 결과가 어느 source revision인지 추적할 수 있습니다.
+`ACA_DEPLOYMENT_ENABLED=false`이면 Main 1/3만 실행되고 Main 2/3·3/3은 정상적으로
+Skipped됩니다. 이미 병합한 뒤 배포하려면 repository variable을 `true`로 변경하고
+`Actions → 02 · Production Deployment → Run workflow`에서 `main`을 선택합니다.
+모든 image는 commit SHA tag를 사용하므로 실행 결과가 어느 source revision인지
+추적할 수 있습니다. 배포 후에는 flag를 다시 `false`로 복구합니다.
 
 ## 7. 데모 확인
 
 ```bash
 curl --fail "https://<web-fqdn>/health"
 curl --fail "https://<web-fqdn>/api/health"
-curl --fail "https://<work-intake-fqdn>/health"
 ```
 
-브라우저에서 Website URL을 열어 회의실 목록, 예약 생성, Work Intake preview를
-확인합니다. API 앱은 internal ingress이므로 외부 URL로 직접 접근할 수 없습니다.
+브라우저에서 Website URL을 열어 회의실 목록과 예약 생성을 확인합니다. API 앱은
+internal ingress이므로 외부 URL로 직접 접근할 수 없습니다.
 
 ## 8. 운영 전환 전 필수 변경
 
 - SQLite를 Azure Database for PostgreSQL 등 영속 managed database로 전환
 - private networking, egress 통제, custom domain/WAF 검토
-- Work Intake의 GitHub App token을 Key Vault와 managed identity로 연결
 - staging Environment와 점진적 revision traffic/rollback 절차 추가
 - 조직의 required tags, Azure Policy, Defender, backup, DR 기준 적용

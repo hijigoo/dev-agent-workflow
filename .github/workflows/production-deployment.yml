@@ -234,7 +234,6 @@ jobs:
           REGISTRY_NAME: ${{ steps.foundation.outputs.registry_name }}
         run: |
           az acr build --registry "$REGISTRY_NAME" --image "meeting-api:${GITHUB_SHA}" apps/api
-          az acr build --registry "$REGISTRY_NAME" --image "work-intake:${GITHUB_SHA}" apps/work-intake
           az acr build --registry "$REGISTRY_NAME" --image "web:${GITHUB_SHA}" apps/web
       - name: Deploy Container Apps revision
         id: apps
@@ -256,11 +255,9 @@ jobs:
             --query properties.outputs \
             --output json)"
           echo "web_url=$(jq -r '.webUrl.value' <<<"$OUTPUTS")" >> "$GITHUB_OUTPUT"
-          echo "work_intake_url=$(jq -r '.workIntakeUrl.value' <<<"$OUTPUTS")" >> "$GITHUB_OUTPUT"
-      - name: Verify separated application URLs
+      - name: Verify application URL
         env:
           WEB_URL: ${{ steps.apps.outputs.web_url }}
-          WORK_INTAKE_URL: ${{ steps.apps.outputs.work_intake_url }}
         run: |
           curl --fail --silent --show-error \
             --retry 12 --retry-delay 10 --retry-all-errors \
@@ -268,16 +265,11 @@ jobs:
           curl --fail --silent --show-error \
             --retry 12 --retry-delay 10 --retry-all-errors \
             "$WEB_URL/api/health"
-          curl --fail --silent --show-error \
-            --retry 12 --retry-delay 10 --retry-all-errors \
-            "$WORK_INTAKE_URL/health"
           curl --fail --silent --show-error "$WEB_URL/" >/dev/null
-          curl --fail --silent --show-error "$WORK_INTAKE_URL/" >/dev/null
           {
             echo "## Azure Container Apps deployment"
             echo
             echo "- Revision: \`${GITHUB_SHA}\`"
             echo "- Test application: $WEB_URL"
-            echo "- Work Intake: $WORK_INTAKE_URL"
             echo "- Approval environment: \`production\`"
           } >> "$GITHUB_STEP_SUMMARY"

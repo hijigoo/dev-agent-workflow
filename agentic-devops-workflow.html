@@ -779,7 +779,6 @@
           <a class="button primary" href="#sequence">전체 시퀀스 보기</a>
           <a class="button" href="https://github.com/hijigoo/dev-agent-workflow" target="_blank" rel="noreferrer">GitHub 저장소</a>
           <a class="button" href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io" target="_blank" rel="noreferrer">테스트 앱</a>
-          <a class="button" href="https://agentworkflow-work-intake.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io" target="_blank" rel="noreferrer">Work Intake</a>
         </div>
         <div class="status-strip" aria-label="현재 데모 상태">
           <div class="status-item">
@@ -822,7 +821,7 @@
           <article class="flow-step">
             <span class="flow-kicker">01 · SIGNAL</span>
             <h3>과업 등록</h3>
-            <p>Jira, Slack, <a href="https://agentworkflow-work-intake.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io" target="_blank" rel="noreferrer">독립 Work Intake 앱</a>에서 배경·인수 조건·제외 범위를 작성합니다.</p>
+            <p>Jira, Slack 또는 GitHub Issue에서 배경·인수 조건·제외 범위를 작성합니다.</p>
           </article>
           <article class="flow-step">
             <span class="flow-kicker">02 · ASSIGN</span>
@@ -876,8 +875,8 @@
               </tr>
               <tr>
                 <td>01 · Issue</td>
-                <td><strong>Open Issue</strong>Work Intake 또는 GitHub의 Cloud Agent task 양식</td>
-                <td>Work Intake가 GitHub 모드이면 Issue를 발행하고, local 모드이면 동일 본문의 preview 생성</td>
+                <td><strong>Open Issue</strong>Jira 연동 또는 GitHub의 Cloud Agent task 양식</td>
+                <td>추적 가능한 GitHub Issue를 만들고 Agent-ready 작업 계약으로 사용</td>
                 <td>작업을 한 session 크기로 제한하고 완료 조건·테스트·금지 변경을 명시</td>
                 <td><code>agent-ready</code> label과 추적 가능한 Issue 번호</td>
               </tr>
@@ -919,28 +918,28 @@
               <tr>
                 <td>07 · 재평가</td>
                 <td><strong>02 · Production Deployment: in progress</strong>Main 1/3 재평가 실행</td>
-                <td>병합 SHA에서 Python·Web·Playwright와 비식별 품질 리포트를 다시 생성; CodeQL은 재실행하지 않음</td>
+                <td>병합 SHA에서 Python·Web·Playwright와 비식별 품질 리포트를 다시 생성; CodeQL은 재실행하지 않음. 배포 flag가 false이면 이후 두 단계는 정상 skip</td>
                 <td>PR 때의 결과가 아니라 병합 commit artifact가 성공했는지 확인</td>
                 <td>Post-merge evaluation Success와 evidence artifact</td>
               </tr>
               <tr>
                 <td>08 · 승인 대기</td>
                 <td><strong>Waiting</strong>Production approval and ACA deployment</td>
-                <td>원본 Issue에 승인 대기 링크를 알리고 Azure 단계는 실행하지 않음</td>
+                <td><code>ACA_DEPLOYMENT_ENABLED=true</code>일 때만 원본 Issue에 승인 대기 링크를 알리고 Azure 단계는 실행하지 않음</td>
                 <td>Required reviewer가 대상 SHA와 평가 결과를 보고 <em>Approve and deploy</em> 선택</td>
                 <td>Environment approval audit; 승인 전 Azure 변경 0건</td>
               </tr>
               <tr>
                 <td>09 · PRD 배포</td>
                 <td><strong>Deploy job: in progress</strong>production Environment 접근 허용</td>
-                <td>OIDC login → foundation Bicep → AcrPull 확인 → ACR 3개 SHA image build → ACA revision 배포</td>
+                <td>OIDC login → foundation Bicep → AcrPull 확인 → ACR 2개 SHA image build → ACA revision 배포</td>
                 <td>OIDC subject, subscription, resource group과 image SHA가 승인 대상과 같은지 확인</td>
-                <td>Meeting API·Work Intake·Web의 동일 SHA image와 Succeeded revision</td>
+                <td>Meeting API·Web의 동일 SHA image와 Succeeded revision</td>
               </tr>
               <tr>
                 <td>10 · 완료</td>
-                <td><strong>02 · Production Deployment: Success</strong>두 외부 URL 제공</td>
-                <td>Web, Meeting API, Work Intake health와 각 루트 UI smoke test 실행</td>
+                <td><strong>02 · Production Deployment: Success</strong>테스트 앱 URL 제공</td>
+                <td>Web, Meeting API health와 루트 UI smoke test 실행</td>
                 <td>기능 확인 후 <code>ACA_DEPLOYMENT_ENABLED=false</code>로 안전 상태 복구</td>
                 <td>HTTPS health 성공, 배포 URL, Actions run, approval·revision 기록</td>
               </tr>
@@ -1181,8 +1180,8 @@
               <span class="test-step-index">03</span>
               <div>
                 <h4>Cloud Agent의 Draft/WIP 진행 상황을 확인합니다</h4>
-                <p>Agent는 작업 시작과 함께 Draft PR을 만들고 코드를 계속 추가합니다. 코드 생성과 자체 테스트가 끝나면 <strong>Ready for review</strong>로 전환합니다.</p>
-                <span class="ui-path">Issue timeline → Connected pull request → Files changed</span>
+                <p>Agent는 작업 시작과 함께 Draft PR을 만들고 코드를 계속 추가합니다. 코드 생성과 자체 테스트가 끝났는지 확인한 뒤 저장소 담당자가 <strong>Ready for review</strong>를 누릅니다.</p>
+                <span class="ui-path">Issue timeline → Connected pull request → Conversation → Ready for review</span>
                 <ul>
                   <li>Issue 인수 조건과 실제 변경 파일이 일치하는지 확인합니다.</li>
                   <li>제외 범위 밖 dependency·workflow 변경이 없는지 확인합니다.</li>
@@ -1198,7 +1197,7 @@
               <div>
                 <h4>01 · PR Validation의 PR 1/2~2/2를 실행합니다</h4>
                 <p>PR이 Ready for review가 되면 품질 검증과 CodeQL이 한 run에서 순차 실행됩니다. Draft 상태에서는 workflow run 자체가 생성되지 않습니다.</p>
-                <span class="ui-path">Pull request → Checks → Approve and run workflows 또는 Re-run all jobs</span>
+                <span class="ui-path">Pull request → Ready for review → Actions → 01 · PR Validation</span>
                 <ul>
                   <li><strong>PR 1/2:</strong> Python, React lint/unit/build, Playwright E2E, quality artifact</li>
                   <li><strong>PR 2/2:</strong> Python과 JavaScript/TypeScript CodeQL</li>
@@ -1216,7 +1215,7 @@
 기존 영어 room-search 테스트가 유지되는지 확인해 주세요.
 workflow와 Azure 설정은 변경하지 마세요.</pre>
                 <ul>
-                  <li>Ready 이후 후속 commit이 올라오면 Actions에서 01 · PR Validation을 수동 실행합니다.</li>
+                  <li>Ready 이후 후속 commit이 올라오면 Actions에서 01 · PR Validation을 열고 해당 PR의 head branch를 선택해 수동 실행합니다.</li>
                   <li>요청자와 다른 독립 reviewer가 승인합니다.</li>
                   <li>모든 conversation이 해결된 뒤에만 merge합니다.</li>
                 </ul>
@@ -1228,12 +1227,13 @@ workflow와 Azure 설정은 변경하지 마세요.</pre>
               <span class="test-step-index">06</span>
               <div>
                 <h4>배포 flag를 켜고 PR을 병합합니다</h4>
-                <p>실제 ACA 배포를 재현할 때만 repository variable을 true로 변경한 뒤 PR을 merge합니다.</p>
+                <p>실제 ACA 배포를 재현할 때만 repository variable을 true로 변경한 뒤 PR을 merge합니다. false로 병합하면 Main 1/3만 실행되고 Main 2/3·3/3은 정상적으로 Skipped됩니다.</p>
                 <span class="ui-path">Settings → Secrets and variables → Actions → Variables → ACA_DEPLOYMENT_ENABLED=true</span>
                 <a class="button" href="https://github.com/hijigoo/dev-agent-workflow/settings/variables/actions">Actions variables 열기</a>
                 <ul>
                   <li>PR checks와 독립 승인이 완료됐는지 먼저 확인합니다.</li>
                   <li>Squash 또는 merge 정책에 맞게 main에 병합합니다.</li>
+                  <li>이미 false로 병합했다면 flag를 true로 바꾼 뒤 Actions에서 02 workflow를 main 대상으로 수동 실행합니다.</li>
                 </ul>
                 <span class="step-result">기대 결과 · main push로 별도 02 · Production Deployment의 Main 1/3 자동 시작</span>
               </div>
@@ -1258,7 +1258,7 @@ workflow와 Azure 설정은 변경하지 마세요.</pre>
               <span class="test-step-index">08</span>
               <div>
                 <h4>production 배포를 승인합니다</h4>
-                <p>평가가 성공하면 deploy job이 production Environment에서 Waiting 상태가 됩니다.</p>
+                <p>평가가 성공하고 <code>ACA_DEPLOYMENT_ENABLED=true</code>이면 deploy job이 production Environment에서 Waiting 상태가 됩니다.</p>
                 <span class="ui-path">Main 2/3 승인 알림 → Main 3/3 → Review deployments → production → Approve and deploy</span>
                 <ul>
                   <li>승인 전에는 Azure OIDC login과 Bicep 배포가 실행되지 않습니다.</li>
@@ -1272,21 +1272,17 @@ workflow와 Azure 설정은 변경하지 마세요.</pre>
               <span class="test-step-index">09</span>
               <div>
                 <h4>Azure ACA와 웹사이트를 확인합니다</h4>
-                <p>OIDC 로그인 후 ACR에서 commit SHA image를 만들고 세 Container App revision을 배포합니다.</p>
+                <p>OIDC 로그인 후 ACR에서 commit SHA image를 만들고 Web·Meeting API Container App revision을 배포합니다.</p>
                 <pre class="command-block">WEB_URL="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io"
-WORK_INTAKE_URL="https://agentworkflow-work-intake.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io"
 curl --fail "$WEB_URL/health"
 curl --fail "$WEB_URL/api/health"
-curl --fail "$WEB_URL/api/agent/about"
-curl --fail "$WORK_INTAKE_URL/health"</pre>
+curl --fail "$WEB_URL/api/agent/about"</pre>
                 <div class="hero-actions">
                   <a class="button primary" href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io" target="_blank" rel="noreferrer">테스트 앱 열기</a>
-                  <a class="button primary" href="https://agentworkflow-work-intake.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io" target="_blank" rel="noreferrer">Work Intake 열기</a>
                   <a class="button" href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/health" target="_blank" rel="noreferrer">Web health</a>
                   <a class="button" href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/api/health" target="_blank" rel="noreferrer">Meeting API health</a>
-                  <a class="button" href="https://agentworkflow-work-intake.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/health" target="_blank" rel="noreferrer">Work Intake health</a>
                 </div>
-                <span class="step-result">기대 결과 · 두 외부 앱 URL과 내부 Meeting API의 HTTPS health 성공</span>
+                <span class="step-result">기대 결과 · 테스트 앱 URL과 내부 Meeting API의 HTTPS health 성공</span>
               </div>
             </article>
 
@@ -1309,8 +1305,8 @@ curl --fail "$WORK_INTAKE_URL/health"</pre>
               <p>GitHub 실습 전 동일한 애플리케이션 검증 명령을 로컬에서 실행할 수 있습니다.</p>
               <pre class="command-block">python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e 'apps/api[test]' -e 'apps/work-intake[test]'
-python -m pytest apps/api/tests apps/work-intake/tests tests
+python -m pip install -e 'apps/api[test]'
+python -m pytest apps/api/tests tests
 
 cd apps/web
 npm ci
@@ -1422,7 +1418,7 @@ npm run test:e2e</pre>
               <div class="demo-step"><div><h4>목표와 역할 분리 · 5분</h4><p>Agent를 개인 도구가 아닌 비동기 팀원으로 정의합니다.</p></div></div>
               <div class="demo-step"><div><h4>Mini Agent 앱 · 5분</h4><p>외부 key 없이 intent, answer, pipeline trace를 실행합니다.</p></div></div>
               <div class="demo-step"><div><h4>Issue → Cloud Agent · 10분</h4><p>한국어 회의실 검색 과업, Copilot assignee, session log를 확인합니다.</p></div></div>
-              <div class="demo-step"><div><h4>Draft 진행 → Ready 검증 · 10분</h4><p>Draft에서는 Agent 진행 상황을 보고, Ready for review 이후 01/02 checks와 E2E artifact를 확인합니다.</p></div></div>
+              <div class="demo-step"><div><h4>Draft 진행 → Ready 검증 · 10분</h4><p>Draft에서는 run을 만들지 않고 Agent 진행 상황만 봅니다. 사람이 Ready for review로 전환한 뒤 PR 1/2·2/2와 E2E artifact를 확인합니다.</p></div></div>
               <div class="demo-step"><div><h4>운영 자동 과업 · 10분</h4><p>04 quality와 GHAS remediation의 공통 패턴을 설명합니다.</p></div></div>
               <div class="demo-step"><div><h4>승인형 ACA 배포 · 5분</h4><p>평가 성공, production 승인 대기, live health evidence를 확인합니다.</p></div></div>
             </div>
@@ -1430,7 +1426,7 @@ npm run test:e2e</pre>
           <article class="card">
             <h3>고객에게 보여줄 증거</h3>
             <div class="checklist">
-              <div class="check">Jira/Work Intake 요구사항과 GitHub Issue의 추적 링크</div>
+              <div class="check">Jira 요구사항과 GitHub Issue의 추적 링크</div>
               <div class="check">Copilot Cloud Agent 전용 branch와 실행 session</div>
               <div class="check">Agent가 만든 실제 코드·테스트·draft PR</div>
               <div class="check">Python, React, Playwright, CodeQL 성공 check</div>
@@ -1440,8 +1436,7 @@ npm run test:e2e</pre>
               <div class="check">
                 HTTPS health:
                 <a href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/health" target="_blank" rel="noreferrer">Web</a> ·
-                <a href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/api/health" target="_blank" rel="noreferrer">Meeting API</a> ·
-                <a href="https://agentworkflow-work-intake.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/health" target="_blank" rel="noreferrer">Work Intake</a>
+                <a href="https://agentworkflow-web.agreeablewater-500fcb4b.koreacentral.azurecontainerapps.io/api/health" target="_blank" rel="noreferrer">Meeting API</a>
               </div>
             </div>
             <div class="callout">

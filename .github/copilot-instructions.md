@@ -5,7 +5,6 @@ This repository demonstrates controlled GitHub Copilot cloud agent workflows.
 ## Architecture
 
 - `apps/api`: FastAPI meeting-room API. SQLite access stays inside the repository class.
-- `apps/work-intake`: FastAPI Jira/local WorkItem adapter and GitHub Issue publisher.
 - `apps/web`: React/TypeScript UI. API DTOs are mapped explicitly in `src/api.ts`.
 - `scripts`: deterministic release detection and privacy-safe aggregate quality reporting.
 
@@ -24,7 +23,7 @@ This repository demonstrates controlled GitHub Copilot cloud agent workflows.
 Run the smallest relevant commands and then the full affected suite:
 
 ```bash
-python -m pytest apps/api/tests apps/work-intake/tests tests
+python -m pytest apps/api/tests tests
 cd apps/web
 npm ci
 npm run lint

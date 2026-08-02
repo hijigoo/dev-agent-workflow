@@ -14,23 +14,6 @@ services:
       timeout: 3s
       retries: 10
 
-  work-intake:
-    build:
-      context: ./apps/work-intake
-    environment:
-      WORK_INTAKE_DATABASE: /data/work_items.sqlite3
-      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
-      GITHUB_REPOSITORY: ${GITHUB_REPOSITORY:-}
-    ports:
-      - "8001:8001"
-    volumes:
-      - intake-data:/data
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
   web:
     build:
       context: ./apps/web
@@ -46,4 +29,3 @@ services:
 
 volumes:
   meeting-data:
-  intake-data:

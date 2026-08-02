@@ -59,28 +59,6 @@ module meetingApi './modules/container-app.bicep' = {
   }
 }
 
-module workIntake './modules/container-app.bicep' = {
-  name: 'work-intake'
-  params: {
-    appName: '${namePrefix}-work-intake'
-    environmentId: environment.id
-    pullIdentityId: pullIdentity.id
-    registryLoginServer: registry.properties.loginServer
-    image: '${registry.properties.loginServer}/work-intake:${imageTag}'
-    targetPort: 8001
-    externalIngress: true
-    minReplicas: 0
-    maxReplicas: 2
-    environmentVariables: [
-      {
-        name: 'WORK_INTAKE_DATABASE'
-        value: '/tmp/work_items.sqlite3'
-      }
-    ]
-    tags: tags
-  }
-}
-
 module web './modules/container-app.bicep' = {
   name: 'web'
   params: {
@@ -104,6 +82,4 @@ module web './modules/container-app.bicep' = {
 }
 
 output webUrl string = 'https://${web.outputs.fqdn}'
-output workIntakeUrl string = 'https://${workIntake.outputs.fqdn}'
 output meetingApiName string = meetingApi.outputs.name
-output workIntakeName string = workIntake.outputs.name

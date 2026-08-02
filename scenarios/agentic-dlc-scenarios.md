@@ -25,7 +25,8 @@ Signal/Requirement
 
 - GitHub Enterprise Cloud 조직에서 Copilot cloud agent 활성화
 - 이 저장소를 fork하거나 파일럿 저장소로 복제
-- `copilot-setup-steps.yml`, CI, E2E, CodeQL을 기본 브랜치에서 먼저 성공
+- `copilot-setup-steps.yml`, `pr-validation.yml`, `production-deployment.yml`을
+  기본 브랜치에 준비하고 기준 테스트를 먼저 성공
 - ruleset에 required checks와 독립 reviewer 승인 적용
 - Jira/Slack 연동은 샘플·비민감 프로젝트에만 연결
 - 운영 로그 대신 `samples/quality-metrics.json` 사용
@@ -49,8 +50,11 @@ Signal/Requirement
 1. Jira work item에 배경, 제외 범위, 인수 조건, 검증 명령을 작성한다.
 2. Jira Assignee를 GitHub Copilot로 지정한다.
 3. Agent session에서 저장소 조사와 계획을 확인한다.
-4. draft PR이 만들어지면 API·UI diff와 신규 테스트를 검토한다.
-5. 리뷰 댓글로 빈 결과 접근성 요구를 추가한다.
+4. Draft PR이 만들어지면 API·UI diff와 신규 테스트를 검토한다. Draft 중에는
+   PR Validation run이 생성되지 않는지 확인한다.
+5. Agent 작업이 끝나면 사람이 **Ready for review**로 전환하고 PR 1/2 품질 검증과
+   PR 2/2 CodeQL 결과를 확인한다.
+6. 리뷰 댓글로 빈 결과 접근성 요구를 추가한다.
 
 ```text
 @copilot 빈 검색 결과에 role="status"를 적용하고,
@@ -58,8 +62,9 @@ Signal/Requirement
 API 계약이나 라우팅 구조는 변경하지 마세요.
 ```
 
-6. 후속 commit과 최신 CI 결과를 확인한다.
-7. 요청자가 기능 검토하고 독립 reviewer가 코드 승인한다.
+7. 후속 commit이 올라오면 `01 · PR Validation`에서 PR head branch를 선택해 수동
+   실행하고 최신 결과를 확인한다.
+8. 요청자가 기능 검토하고 독립 reviewer가 코드 승인한다.
 
 ### 기대 증거
 
@@ -158,7 +163,7 @@ Agent에게 경고 suppress를 요청하는 리뷰 댓글을 남기고, reposito
 
 1. 회의실 이름 검색 API와 UI
 2. 취소된 예약 숨김 필터
-3. Work Intake 목록·상세 화면
+3. Mini Agent 장비 조건 응답과 UI evidence
 
 각 과업은 한 저장소·한 PR 안에서 독립적으로 완료 가능해야 한다.
 
@@ -194,7 +199,7 @@ Cloud Agent가 민감한 원문 없이 품질 저하를 탐지하고, 근거 있
 ### 실행
 
 1. `samples/quality-metrics.json`에서 fallback과 latency를 기준선보다 악화시킨다.
-2. **Weekly quality review** workflow를 수동 실행한다.
+2. **03 · Optional — Scheduled Security and Quality Review** workflow를 수동 실행한다.
 3. job summary와 `weekly-quality-report` artifact를 확인한다.
 4. 생성된 quality regression Issue에서 변화량, cluster, evidence ID를 확인한다.
 5. **Quality Analyst** custom agent로 분석하되 read-only 작업만 허용한다.
@@ -252,6 +257,7 @@ Cloud Agent의 PR 병합과 운영 배포를 분리하고, 병합된 정확한 c
 - Azure resource group과 GitHub OIDC federated identity 준비
 - GitHub `production` Environment에 required reviewer 지정
 - Environment secrets·variables 등록
+- Repository Actions variable `ACA_DEPLOYMENT_ENABLED=false`로 시작
 - API는 internal ingress, Web만 external ingress로 구성
 
 자세한 설정은 `docs/azure-container-apps-deployment.md`를 따른다.
@@ -259,15 +265,18 @@ Cloud Agent의 PR 병합과 운영 배포를 분리하고, 병합된 정확한 c
 ### 실행
 
 1. 신규 기능 Issue를 Cloud Agent에 할당한다.
-2. Agent PR의 CI, E2E, CodeQL, 변경 범위와 image/Dockerfile 변경을 검토한다.
-3. 기능 owner와 독립 reviewer 승인 후 `main`에 병합한다.
-4. **Evaluate and deploy to Azure Container Apps** workflow에서 병합 commit SHA와
-   `Post-merge evaluation` 결과를 확인한다.
-5. 평가 성공 뒤 deploy job이 `production` 승인을 기다리는지 확인한다.
-6. 승인 전 Azure login·Bicep·ACR build step이 시작되지 않았는지 확인한다.
-7. 운영 승인자가 evaluation artifact를 확인하고 deployment를 승인한다.
-8. Bicep foundation, SHA-tagged ACR images, ACA revision과 세 health check를 확인한다.
-9. job summary의 Website URL로 회의실 예약과 Work Intake preview를 실행한다.
+2. Agent 작업 완료 후 사람이 Ready for review로 전환하고 **01 · PR Validation**의
+   PR 1/2 품질 검증과 PR 2/2 CodeQL을 확인한다.
+3. 변경 범위와 image/Dockerfile 변경을 검토하고 기능 owner와 독립 reviewer가 승인한다.
+4. Repository Actions variable `ACA_DEPLOYMENT_ENABLED=true`로 변경하고 `main`에 병합한다.
+5. **02 · Production Deployment**에서 병합 commit SHA와 Main 1/3 평가 결과를 확인한다.
+6. Main 2/3이 원본 Issue에 production 승인 링크를 추가했는지 확인한다.
+7. Main 3/3이 `production` 승인을 기다리는지, 승인 전 Azure login·Bicep·ACR build가
+   시작되지 않았는지 확인한다.
+8. 운영 승인자가 evaluation artifact를 확인하고 deployment를 승인한다.
+9. Bicep foundation, SHA-tagged ACR images, ACA revision과 Web·Meeting API health를 확인한다.
+10. job summary의 Website URL로 회의실 예약과 Mini Agent 동작을 확인한다.
+11. 배포 후 `ACA_DEPLOYMENT_ENABLED=false`로 복구한다.
 
 ### 기대 증거
 
@@ -277,11 +286,12 @@ Cloud Agent의 PR 병합과 운영 배포를 분리하고, 병합된 정확한 c
 - OIDC login과 secret 없는 authentication
 - ACR의 commit SHA image tags
 - 외부 Web URL과 internal API ingress 설정
-- 테스트 앱의 `/health`, `/api/health`와 Work Intake 독립 URL의 `/health` 성공
+- 테스트 앱의 `/health`, `/api/health` 성공
 
 ### 실패 주입
 
 - 평가 test 하나를 실패시켜 deploy job이 생성되지 않는지 확인한다.
+- `ACA_DEPLOYMENT_ENABLED=false`에서 Main 2/3·3/3이 정상적으로 Skipped되는지 확인한다.
 - deployment 승인을 보류해 Azure login step이 실행되지 않는지 확인한다.
 - 잘못된 `AZURE_LOCATION`을 설정해 resource group region 검증에서 명확히 실패하는지
   확인한다.

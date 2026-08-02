@@ -4,8 +4,8 @@ GitHub Copilot cloud agent를 팀 개발 프로세스에 편입하는 실행 가
 
 이 저장소는 다음 흐름을 시연합니다.
 
-1. Jira webhook 또는 로컬 Work Intake에서 과업 등록
-2. 실제 GitHub Issue 생성 또는 자격증명 없는 preview 생성
+1. Jira 또는 GitHub에서 과업 등록
+2. 추적 가능한 GitHub Issue와 Agent-ready 작업 계약 생성
 3. GitHub UI/Jira/Slack에서 Copilot cloud agent에 작업 할당
 4. Agent가 코드·테스트·PR 작성
 5. CI, E2E, CodeQL과 독립 reviewer가 변경 검증
@@ -19,7 +19,6 @@ GitHub Copilot cloud agent를 팀 개발 프로세스에 편입하는 실행 가
 ```text
 apps/
   api/                  FastAPI 회의실 예약·비식별 품질 지표 API
-  work-intake/          독립 UI·Jira webhook·GitHub Issue 생성 API
   web/                  회의실·Mini Agent 테스트 앱
 scripts/                주간 품질 리포트
 tests/                  자동화 스크립트 테스트
@@ -34,6 +33,8 @@ docs/                    Azure OIDC와 production 승인 설정 가이드
 전체 workflow와 시퀀스 다이어그램은
 [`agentic-devops-workflow.html`](agentic-devops-workflow.html),
 상세 고객 workshop은 [`cloud-agent-ax-workshop.html`](cloud-agent-ax-workshop.html)입니다.
+Jira·Slack, Dograh·Pipecat 업그레이드, GHAS, E2E, 신규 기능, 모니터링 적용 답변은
+[`cloud-agent-use-case-guide.html`](cloud-agent-use-case-guide.html)에서 확인합니다.
 Agentic DLC 실습과 평가표는
 [`scenarios/agentic-dlc-scenarios.md`](scenarios/agentic-dlc-scenarios.md)를 사용합니다.
 브라우저의 **Mini Agent** 화면은 별도 model/API key 없이 즉시 실행됩니다.
@@ -48,28 +49,15 @@ docker compose up --build
 
 - Web: <http://localhost:5173>
 - Meeting API docs: <http://localhost:8000/docs>
-- Work Intake: <http://localhost:8001>
-- Work Intake docs: <http://localhost:8001/docs>
-
-기본은 **local preview mode**입니다. Work Intake에서 실제 GitHub Issue를 생성하려면:
-
-```bash
-export GITHUB_TOKEN="fine-grained token or GitHub App token"
-export GITHUB_REPOSITORY="hijigoo/dev-agent-workflow"
-docker compose up --build
-```
-
-토큰은 저장소에 기록하지 마세요. 운영에서는 GitHub App의 최소 권한 토큰을 사용합니다.
 
 ### 로컬 프로세스
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e 'apps/api[test]' -e 'apps/work-intake[test]'
+python -m pip install -e 'apps/api[test]'
 
 uvicorn meeting_api.main:app --app-dir apps/api --reload --port 8000
-uvicorn work_intake.main:app --app-dir apps/work-intake --reload --port 8001
 
 cd apps/web
 npm ci
@@ -79,7 +67,7 @@ npm run dev
 ## 테스트
 
 ```bash
-python -m pytest apps/api/tests apps/work-intake/tests tests
+python -m pytest apps/api/tests tests
 cd apps/web
 npm ci
 npm run lint
@@ -108,7 +96,9 @@ npx playwright install chromium
 
 ### Jira
 
-`POST /webhooks/jira/normalize`은 Jira webhook을 공통 WorkItem으로 변환합니다. 실제 Jira용 GitHub Copilot 연동을 설치하면 Jira Assignee 또는 `@GitHub Copilot` 댓글로 직접 Agent 작업을 시작할 수 있습니다. 자세한 순서는 발표 자료의 **실행 튜토리얼**을 참고하세요.
+실제 Jira용 GitHub Copilot 연동을 설치하면 Jira Assignee 또는 `@GitHub Copilot`
+댓글로 직접 Agent 작업을 시작할 수 있습니다. 자세한 순서는 발표 자료의
+**실행 튜토리얼**을 참고하세요.
 
 ### Slack
 
@@ -150,8 +140,8 @@ PR 검증과 Main 배포를 서로 다른 workflow로 분리해 실행 원인과
 Copilot이 만든 Draft/WIP PR에서는 PR Validation job을 실행하지 않습니다.
 **Ready for review** 전환 시 PR 1/2~2/2를 순서대로 한 번 수행합니다. Draft에서는
 workflow run 자체가 생성되지 않습니다. Ready 이후 commit이 추가되면 Actions에서
-`01 · PR Validation`을 수동 실행합니다. CodeQL은 PR 2/2에서 한 번 실행하고 merge
-후에는 다시 실행하지 않습니다.
+`01 · PR Validation`을 열고 **PR의 head branch**를 선택해 수동 실행합니다. CodeQL은
+PR 2/2에서 한 번 실행하고 merge 후에는 다시 실행하지 않습니다.
 
 `03 · Optional — Scheduled Security and Quality Review`는 주간 CodeQL과 수동
 비식별 품질 검토를 담당합니다.
@@ -169,16 +159,16 @@ Dependabot alerts와 security updates는 repository **Security & analysis** 설�
 ```text
 main merge
   → post-merge unit/integration/E2E/quality evaluation
-  → production Environment required reviewer 대기
+  → ACA_DEPLOYMENT_ENABLED 확인
+      ├─ false: 승인 알림·배포를 정상 skip
+      └─ true: production Environment required reviewer 대기
   → GitHub OIDC 로그인
   → ACR build + Container Apps revision
-  → 테스트 앱·Work Intake 독립 URL과 health check 보고
+  → 테스트 앱 URL과 Web·Meeting API health check 보고
 ```
 
-배포 후 공개 URL은 두 개입니다.
-
-- 테스트 앱: `agentworkflow-web` — 회의실·예약·Mini Agent 기능
-- Work Intake: `agentworkflow-work-intake` — 업무 요청·GitHub Issue 생성
+배포 후 공개 URL은 테스트 앱 `agentworkflow-web` 하나이며 회의실·예약·Mini Agent
+기능을 제공합니다.
 
 `agentworkflow-meeting-api`는 테스트 앱만 호출하는 내부 ACA로 유지합니다.
 
@@ -188,6 +178,13 @@ required reviewer 구성은
 따릅니다. 현재 SQLite 데이터는 revision-local인 POC 구성이므로 운영 전에는 managed
 database로 전환해야 합니다. Repository variable `ACA_DEPLOYMENT_ENABLED`의 기본값은
 비활성이며, `production` 보호와 OIDC 설정을 완료한 뒤에만 `true`로 변경합니다.
+
+배포를 실행하려면 `Settings → Secrets and variables → Actions → Variables`에서
+`ACA_DEPLOYMENT_ENABLED=true`로 변경합니다. PR 병합 전 변경했다면 `main` push run이
+Main 1/3~3/3을 이어서 실행합니다. 이미 `false` 상태로 병합해 Main 2/3·3/3이
+Skipped라면, 값을 `true`로 변경한 뒤 `Actions → 02 · Production Deployment →
+Run workflow`에서 `main`을 선택해 다시 실행합니다. 배포 완료 후에는 `false`로
+복구합니다.
 
 ## 실제 환경 적용 전 변경할 값
 
