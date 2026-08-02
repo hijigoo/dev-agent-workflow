@@ -359,6 +359,10 @@ class ManualAgentWorkflowTests(unittest.TestCase):
         self.assertIn("continue-on-error: true", workflow)
         self.assertIn("python scripts/summarize_playwright.py", workflow)
         self.assertIn("actions/upload-artifact@v7", workflow)
+        self.assertIn(
+            "name: project-e2e-${{ github.run_id }}-${{ github.sha }}", workflow
+        )
+        self.assertNotIn("project-e2e-${{ github.ref_name }}", workflow)
         self.assertIn("Fail workflow when project E2E failed", workflow)
         self.assertNotIn("build_quality_report.py", workflow)
 
