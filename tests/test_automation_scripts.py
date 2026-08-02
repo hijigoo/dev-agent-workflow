@@ -1,5 +1,7 @@
 import importlib.util
 import json
+import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -323,6 +325,30 @@ class ManualAgentWorkflowTests(unittest.TestCase):
         self.assertIn("python automation/scripts/summarize_codeql_sarif.py", workflow)
         self.assertIn("manual-codeql-remediation", workflow)
         self.assertNotIn("dependabot", workflow.lower())
+
+    def test_codeql_security_query_command_handles_branch_name(self):
+        workflow = self.read_workflow("manual-codeql-remediation.yml")
+        command = workflow.split('          query="$(\n', 1)[1].split(
+            '\n          )"', 1
+        )[0]
+        environment = {**os.environ, "TARGET_BRANCH": "feature/security-fix"}
+
+        result = subprocess.run(
+            [
+                "bash",
+                "-c",
+                f'set -o pipefail\nquery="$(\n{command}\n)"\nprintf %s "$query"',
+            ],
+            check=True,
+            capture_output=True,
+            env=environment,
+            text=True,
+        )
+
+        self.assertEqual(
+            result.stdout,
+            "ref%3Arefs/heads/feature/security-fix%20tool%3ACodeQL%20is%3Aopen",
+        )
 
     def test_project_e2e_runs_existing_scenarios_and_fails_after_reporting(self):
         workflow = self.read_workflow("manual-project-e2e.yml")

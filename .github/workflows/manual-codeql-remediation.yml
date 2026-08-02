@@ -84,7 +84,10 @@ jobs:
             --branch "$TARGET_BRANCH" \
             --sha "$TARGET_SHA"
           cat codeql-report.md >> "$GITHUB_STEP_SUMMARY"
-          query="$(python -c 'import os, urllib.parse; print(urllib.parse.quote(f"ref:refs/heads/{os.environ[\"TARGET_BRANCH\"]} tool:CodeQL is:open"))')"
+          query="$(
+            printf 'ref:refs/heads/%s tool:CodeQL is:open' "$TARGET_BRANCH" |
+              python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.stdin.read()))'
+          )"
           printf '\n[선택 branch Code scanning 상세 보기](%s/%s/security/code-scanning?query=%s)\n' \
             "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$query" >> "$GITHUB_STEP_SUMMARY"
       - id: issue
