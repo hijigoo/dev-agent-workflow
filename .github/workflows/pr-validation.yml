@@ -103,9 +103,16 @@ jobs:
                       else (try ($score | tonumber) catch null)
                       end
                     ),
-                    level: ($result.level // "none")
+                    level: ($result.level // "none"),
+                    key: [
+                      $result.ruleId,
+                      $result.locations[0].physicalLocation.artifactLocation.uri,
+                      $result.locations[0].physicalLocation.region.startLine,
+                      $result.message.text
+                    ]
                   }
-                ]
+                ] |
+                unique_by(.key)
               ' "${sarif_files[@]}"
             )"
             total="$(jq 'length' <<<"$findings")"
@@ -115,6 +122,9 @@ jobs:
             low="$(jq '[.[] | select(.score != null and .score > 0 and .score < 4)] | length' <<<"$findings")"
             other="$(jq '[.[] | select(.score == null or .score == 0)] | length' <<<"$findings")"
           fi
+
+          printf 'CodeQL SARIF summary: total=%s critical=%s high=%s medium=%s low=%s other=%s\n' \
+            "$total" "$critical" "$high" "$medium" "$low" "$other"
 
           {
             echo "## PR 2/2 · CodeQL security"
