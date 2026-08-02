@@ -44,27 +44,15 @@ sequenceDiagram
     PR->>Actions: 01 PR Validation 실행
     Actions->>Actions: PR 1/2 품질·E2E 테스트
     Actions->>Actions: PR 2/2 CodeQL
-
-    alt 검증 실패 또는 보안 경고
-        Actions-->>Human: 실패 근거·artifact·annotation 보고
-        Human->>Agent: 기존 PR에서 수정 요청
-        Agent->>PR: 수정 commit과 테스트 결과 추가
-        Human->>Actions: 01을 PR head branch로 재실행
-    else 모든 검증 성공
-        Actions-->>Human: required checks 통과
-        Human->>PR: 기능·보안 리뷰 후 병합 승인
-        PR->>Actions: main 병합으로 02 실행
-        Actions->>Actions: Main 1/3 병합 SHA 재평가
-        alt ACA 배포 비활성
-            Actions-->>Human: 승인·배포를 정상 Skip
-        else ACA 배포 활성
-            Actions->>Issue: Main 2/3 운영 승인 링크
-            Human->>Actions: production Environment 승인
-            Actions->>Azure: Main 3/3 OIDC · ACR · ACA 배포
-            Azure-->>Actions: Web · API HTTPS smoke 결과
-            Actions-->>Human: 배포 결과 보고
-        end
-    end
+    Actions-->>Human: required checks 통과
+    Human->>PR: 기능·보안 리뷰 후 병합 승인
+    PR->>Actions: main 병합으로 02 실행
+    Actions->>Actions: Main 1/3 병합 SHA 재평가
+    Actions->>Issue: Main 2/3 운영 승인 링크
+    Human->>Actions: production Environment 승인
+    Actions->>Azure: Main 3/3 OIDC · ACR · ACA 배포
+    Azure-->>Actions: Web · API HTTPS smoke 결과
+    Actions-->>Human: 배포 결과 보고
 ```
 
 ## Agentic DevOps를 구성하는 Actions 00~05
