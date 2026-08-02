@@ -19,7 +19,7 @@ test('runs the deterministic Mini Agent and displays pipeline evidence', async (
   await page.getByRole('textbox', { name: '메시지' }).fill('How do I reserve a room?')
   await page.getByRole('button', { name: '미니 에이전트 실행' }).click()
 
-  await expect(page.getByRole('status')).toContainText('Choose a room')
+  await expect(page.getByRole('status')).toContainText('Intentional E2E failure demo')
   await expect(page.getByText('reservation-help', { exact: true })).toBeVisible()
   await expect(page.getByText('classify:reservation-help')).toBeVisible()
 })
