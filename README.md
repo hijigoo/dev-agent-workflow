@@ -47,19 +47,28 @@ sequenceDiagram
     participant PR as Pull Request
     participant Azure as Azure Container Apps
 
-    Human->>Issue: 과업 등록 후 Copilot 할당
-    Issue->>Agent: 작업 전달
-    Agent->>Actions: 00 개발 환경 준비
-    Agent->>PR: 코드·테스트와 Draft PR
-    Human->>PR: Ready 전환
-    PR->>Actions: 01 품질·E2E·CodeQL 검증
-    Actions-->>Human: required checks 결과
-    Human->>PR: 리뷰·승인·main 병합
-    PR->>Actions: 02 병합 결과 재검증
-    Actions->>Issue: 운영 승인 링크
-    Human->>Actions: production Environment 승인
-    Actions->>Azure: OIDC · ACR · ACA 배포와 HTTPS smoke
-    Azure-->>Human: 배포 결과
+    rect rgba(177, 31, 75, 0.10)
+        Note over Human,Actions: 00 · Cloud Agent 준비·개발
+        Human->>Issue: 과업 등록 후 Copilot 할당
+        Issue->>Agent: 작업 전달
+        Agent->>Actions: 개발 환경 준비
+        Agent->>PR: 코드·테스트와 Draft PR
+    end
+    rect rgba(0, 120, 212, 0.10)
+        Note over Human,Actions: 01 · PR 품질·보안 검증
+        Human->>PR: Ready 전환
+        PR->>Actions: 품질·E2E·CodeQL 검증
+        Actions-->>Human: required checks 결과
+        Human->>PR: 리뷰·승인·main 병합
+    end
+    rect rgba(22, 163, 74, 0.10)
+        Note over Human,Azure: 02 · 재검증·승인·운영 배포
+        PR->>Actions: 병합 결과 재검증
+        Actions->>Issue: 운영 승인 링크
+        Human->>Actions: production Environment 승인
+        Actions->>Azure: OIDC · ACR · ACA 배포와 HTTPS smoke
+        Azure-->>Human: 배포 결과
+    end
 ```
 
 ### 00 · Cloud Agent 재현 환경과 작업 할당
