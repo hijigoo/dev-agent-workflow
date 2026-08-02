@@ -1,20 +1,58 @@
-# Cloud Agent Platform Workflow Demo
+# GitHub Cloud Agent 개발 파이프라인 Demo
 
-GitHub Copilot cloud agent를 팀 개발 프로세스에 편입하는 실행 가능한 샘플입니다.
+GitHub Copilot cloud agent를 개인용 코딩 도구가 아니라 팀 개발 프로세스의 한 구성원으로
+편입하는 **파이프라인 데모**입니다. 저장소의 회의실·Mini Agent 앱은 이 파이프라인에서
+개발, 회귀 테스트, 보안 분석, 승인, 배포가 어떻게 연결되는지 검증하기 위한 샘플입니다.
 
-이 저장소는 다음 흐름을 시연합니다.
+핵심 시연 흐름은 다음과 같습니다.
 
 1. Jira 또는 GitHub에서 과업 등록
 2. 추적 가능한 GitHub Issue와 Agent-ready 작업 계약 생성
 3. GitHub UI/Jira/Slack에서 Copilot cloud agent에 작업 할당
 4. Agent가 코드·테스트·PR 작성
 5. CI, E2E, CodeQL과 독립 reviewer가 변경 검증
-6. Mini Agent 품질 저하를 감지해 개선 과업 생성
+6. OSS·보안·E2E 이상을 수동 진단해 다음 Agent-ready Issue 생성
 7. `main` 병합 후 재평가하고 별도 운영 승인 뒤 Azure Container Apps 배포
 
 > Cloud agent는 PR을 자동 승인하거나 병합하지 않습니다. 이 샘플도 모든 자동화의 종착점을 Issue 또는 draft PR로 제한합니다.
 
-## 구성
+## 파이프라인 한눈에 보기
+
+```mermaid
+flowchart TD
+    issue["Jira / GitHub Issue"] --> assign["사람이 Issue를 Copilot에 할당"]
+    assign --> setup["00 · Cloud Agent Setup<br/>Python · Node · 의존성 준비"]
+    setup --> agent["Cloud Agent<br/>구현 · 단위/회귀 테스트"]
+    agent --> draft["Draft PR 생성"]
+    draft --> ready["사람이 Ready for review로 전환"]
+    ready --> quality["01 · PR 1/2<br/>Python · React · Playwright"]
+    quality -->|"성공"| codeql["01 · PR 2/2<br/>CodeQL"]
+    quality -->|"실패"| fix["Cloud Agent가 원인 수정"]
+    codeql -->|"경고 또는 실패"| fix
+    fix --> draft
+    codeql -->|"성공"| review["사람이 기능·보안 리뷰 및 병합 승인"]
+    review --> merge["main 병합"]
+    merge --> evaluate["02 · Main 1/3<br/>병합 SHA 재평가"]
+    evaluate --> enabled{"ACA 배포 활성화?"}
+    enabled -->|"아니요"| skip["승인 알림·배포 정상 Skip"]
+    enabled -->|"예"| notice["02 · Main 2/3<br/>원본 Issue에 승인 링크"]
+    notice --> approval["production Environment<br/>사람의 운영 승인"]
+    approval --> deploy["02 · Main 3/3<br/>OIDC · ACR · ACA 배포"]
+    deploy --> smoke["Web · API HTTPS smoke"]
+```
+
+## Actions 00~05 역할
+
+| 번호 | Workflow | 시작 조건 | 수행 작업 | 결과 |
+|---|---|---|---|---|
+| 00 | Cloud Agent — Reproducible Setup | Copilot coding agent job | Python·Node·프로젝트 의존성 설치 | Agent가 같은 환경에서 개발·테스트 |
+| 01 | PR Validation — Quality and CodeQL | PR을 Ready for review로 전환하거나 수동 실행 | Python·React·Playwright 회귀 테스트 후 CodeQL | required check와 Job Summary, 실패 artifact |
+| 02 | Production Deployment — Evaluate, Approve, Deploy | `main` 병합 | 병합 SHA 재평가, production 승인, OIDC 기반 ACA 배포 | 승인 전 대기 또는 Web·API smoke 결과 |
+| 03 | Manual — OSS Upgrade Intake | 담당자가 Run workflow 실행 | FastAPI·React/React DOM의 현재 버전과 최신 stable 비교 | 최신 상태 summary 또는 Agent-ready Issue |
+| 04 | Manual — Branch CodeQL Remediation | 담당자가 branch를 선택해 Run workflow 실행 | 고정한 branch SHA를 Python·JavaScript/TypeScript CodeQL로 분석 | 보안 summary와 branch별 Agent-ready Issue |
+| 05 | Manual — Project E2E | 담당자가 branch를 선택해 Run workflow 실행 | API·Web 기동 후 예약·영어/한국어 Mini Agent Playwright 실행 | HTML report·trace와 실패 시 Agent-ready Issue |
+
+## 샘플 프로젝트 구성
 
 ```text
 apps/
@@ -36,7 +74,7 @@ Agentic DLC 실습과 평가표는
 [`scenarios/agentic-dlc-scenarios.md`](scenarios/agentic-dlc-scenarios.md)를 사용합니다.
 브라우저의 **Mini Agent** 화면은 별도 model/API key 없이 즉시 실행됩니다.
 
-## 빠른 실행
+## 샘플 프로젝트 실행
 
 ### Docker Compose
 
@@ -61,7 +99,7 @@ npm ci
 npm run dev
 ```
 
-## 테스트
+## 샘플 프로젝트 테스트
 
 ```bash
 python -m pytest apps/api/tests tests
@@ -101,30 +139,33 @@ npx playwright install chromium
 
 GitHub App for Slack을 설치하고 DM 또는 비민감 thread에서 `@GitHub Copilot`을 호출합니다. Slack은 요청·상태 공유, Jira는 업무 추적, GitHub PR은 코드 검토의 기준 채널로 사용합니다.
 
-## 자동화 시나리오
+## 수동 진단에서 Cloud Agent 수정 PR까지
 
-| 요구사항 | 구현 |
-|---|---|
-| 오픈소스 업그레이드 | 수동 FastAPI·React 최신 stable 확인 + Agent-ready Issue |
-| 코드 취약점 | 수동 branch CodeQL + Agent-ready Issue + Copilot 할당 |
-| UI E2E | 수동 Playwright 3개 시나리오 + trace·HTML report artifact |
-| 답변 품질 | Mini Agent 영어·한국어 기대 답변 Playwright E2E |
-| 신규 기능 | Issue template + custom agents + required checks |
-| 승인 후 Azure 배포 | 원본 Issue 승인 대기 알림 + `production` Environment + ACA |
+```mermaid
+flowchart TD
+    operator["담당자가 Actions에서<br/>Run workflow 실행"] --> oss["03 · OSS Upgrade<br/>최신 stable 비교"]
+    operator --> security["04 · Branch CodeQL<br/>선택 branch 분석"]
+    operator --> e2e["05 · Project E2E<br/>브라우저 3개 시나리오"]
 
-## GitHub Actions 데모 순서
+    oss -->|"업데이트 없음"| ossSummary["Summary만 기록"]
+    security -->|"경고 없음"| securitySummary["Summary만 기록"]
+    e2e -->|"성공"| e2eReport["Summary · HTML report · trace"]
 
-PR 검증과 Main 배포를 서로 다른 workflow로 분리해 실행 원인과 승인 지점을
-명확하게 표시합니다.
+    oss -->|"업데이트 발견"| task["중복 방지된<br/>Agent-ready Issue 생성/갱신"]
+    security -->|"경고 발견"| task
+    e2e -->|"실패"| task
 
-| 번호 | Workflow | 역할 |
-|---|---|---|
-| 00 | Cloud Agent — Reproducible Setup | Copilot Agent job 내부 환경 준비 |
-| 01 | PR Validation — Quality and CodeQL | Ready PR 품질·보안 검증 |
-| 02 | Production Deployment — Evaluate, Approve, Deploy | Main 재평가·운영 승인·ACA 배포 |
-| 03 | Manual — OSS Upgrade Intake | FastAPI·React 최신 stable 확인과 작업 Issue |
-| 04 | Manual — Branch CodeQL Remediation | 선택 branch CodeQL과 보안 작업 Issue |
-| 05 | Manual — Project E2E | 예약·Mini Agent Playwright 3개 시나리오 |
+    task --> humanAssign["사람이 Issue를 Copilot에 할당"]
+    humanAssign --> cloudAgent["00 환경의 Cloud Agent가<br/>코드·dependency 수정 및 테스트"]
+    cloudAgent --> pullRequest["수정 Draft PR"]
+    pullRequest --> validation["기존 01 PR Validation"]
+    validation --> humanReview["사람의 review · approve · merge"]
+    humanReview --> production["기존 02 Production Deployment"]
+```
+
+`03`~`05`는 진단과 Issue 생성까지만 담당합니다. source code 수정, Copilot 할당,
+PR 생성, 병합, 배포를 자동으로 수행하지 않으므로 모든 변경에는 사람의 명시적 승인
+단계가 남습니다.
 
 | 구간 | Job | 데모 목적 | 실행 시점 |
 |---|---|---|---|
@@ -195,8 +236,7 @@ Run workflow`에서 `main`을 선택해 다시 실행합니다. 배포 완료 �
 
 - `.github/CODEOWNERS`의 팀·사용자
 - Jira/Slack GitHub App의 대상 조직·저장소 범위
-- `QUALITY_METRICS_URL` repository variable과 read-only 인증 방식
-- 품질 기준선과 E2E test data
+- E2E test data와 기대 결과
 - ruleset의 required checks와 승인 수
 - `production` Environment의 required reviewer와 Azure OIDC federation
 - Azure resource group, region, required tags·Policy·quota
