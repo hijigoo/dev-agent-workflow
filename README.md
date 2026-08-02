@@ -25,25 +25,46 @@ GitHub Copilot Cloud Agent가 팀원처럼 개발 과업을 수행하고, GitHub
 ## Agentic DevOps 전체 흐름
 
 ```mermaid
-flowchart TD
-    issue["Jira / GitHub Issue<br/>개발 과업 또는 Actions 진단 결과"] --> assign["사람<br/>Issue를 Copilot에 할당"]
-    assign --> setup["GitHub Actions 00<br/>Cloud Agent 재현 환경 준비"]
-    setup --> agent["Cloud Agent<br/>구현 · 단위/회귀 테스트 · Draft PR"]
-    agent --> ready["사람<br/>계획과 변경 범위 확인 · Ready 전환"]
-    ready --> quality["GitHub Actions 01 · PR 1/2<br/>Python · React · Playwright"]
-    quality -->|"성공"| codeql["01 · PR 2/2<br/>CodeQL"]
-    quality -->|"실패"| fix["Cloud Agent<br/>검증 근거로 원인 수정"]
-    codeql -->|"경고 또는 실패"| fix
-    fix --> ready
-    codeql -->|"성공"| review["사람이 기능·보안 리뷰 및 병합 승인"]
-    review --> merge["main 병합"]
-    merge --> evaluate["GitHub Actions 02 · Main 1/3<br/>병합 SHA 재평가"]
-    evaluate --> enabled{"ACA 배포 활성화?"}
-    enabled -->|"아니요"| skip["승인 알림·배포 정상 Skip"]
-    enabled -->|"예"| notice["02 · Main 2/3<br/>원본 Issue에 승인 링크"]
-    notice --> approval["production Environment<br/>사람의 운영 승인"]
-    approval --> deploy["02 · Main 3/3<br/>OIDC · ACR · ACA 배포"]
-    deploy --> smoke["Web · API HTTPS smoke"]
+sequenceDiagram
+    autonumber
+    actor Human as 담당자 / Reviewer
+    participant Issue as Jira / GitHub Issue
+    participant Agent as Cloud Agent
+    participant Actions as GitHub Actions
+    participant PR as Pull Request
+    participant Azure as Azure Container Apps
+
+    Human->>Issue: 개발 과업 등록
+    Human->>Agent: Issue를 Copilot에 할당
+    Agent->>Actions: 00 재현 환경 준비
+    Actions-->>Agent: Python · Node · 의존성 준비 완료
+    Agent->>Agent: 코드 수정 및 단위·회귀 테스트
+    Agent->>PR: Draft PR 생성
+    Human->>PR: 계획·변경 범위 확인 후 Ready 전환
+    PR->>Actions: 01 PR Validation 실행
+    Actions->>Actions: PR 1/2 품질·E2E 테스트
+    Actions->>Actions: PR 2/2 CodeQL
+
+    alt 검증 실패 또는 보안 경고
+        Actions-->>Human: 실패 근거·artifact·annotation 보고
+        Human->>Agent: 기존 PR에서 수정 요청
+        Agent->>PR: 수정 commit과 테스트 결과 추가
+        Human->>Actions: 01을 PR head branch로 재실행
+    else 모든 검증 성공
+        Actions-->>Human: required checks 통과
+        Human->>PR: 기능·보안 리뷰 후 병합 승인
+        PR->>Actions: main 병합으로 02 실행
+        Actions->>Actions: Main 1/3 병합 SHA 재평가
+        alt ACA 배포 비활성
+            Actions-->>Human: 승인·배포를 정상 Skip
+        else ACA 배포 활성
+            Actions->>Issue: Main 2/3 운영 승인 링크
+            Human->>Actions: production Environment 승인
+            Actions->>Azure: Main 3/3 OIDC · ACR · ACA 배포
+            Azure-->>Actions: Web · API HTTPS smoke 결과
+            Actions-->>Human: 배포 결과 보고
+        end
+    end
 ```
 
 ## Agentic DevOps를 구성하는 Actions 00~05
@@ -147,25 +168,32 @@ GitHub App for Slack을 설치하고 DM 또는 비민감 thread에서 `@GitHub C
 ## 수동 진단에서 Cloud Agent 수정 PR까지
 
 ```mermaid
-flowchart TD
-    operator["담당자가 Actions에서<br/>Run workflow 실행"] --> oss["03 · OSS Upgrade<br/>최신 stable 비교"]
-    operator --> security["04 · Branch CodeQL<br/>선택 branch 분석"]
-    operator --> e2e["05 · Project E2E<br/>브라우저 3개 시나리오"]
+sequenceDiagram
+    autonumber
+    actor Human as 담당자
+    participant Actions as GitHub Actions
+    participant Issue as GitHub Issue
+    participant Agent as Cloud Agent
+    participant PR as Pull Request
 
-    oss -->|"업데이트 없음"| ossSummary["Summary만 기록"]
-    security -->|"경고 없음"| securitySummary["Summary만 기록"]
-    e2e -->|"성공"| e2eReport["Summary · HTML report · trace"]
+    Human->>Actions: 03 OSS / 04 CodeQL / 05 E2E 중 선택해 Run workflow
+    Actions->>Actions: 최신 버전·취약점·E2E 결과 진단
 
-    oss -->|"업데이트 발견"| task["중복 방지된<br/>Agent-ready Issue 생성/갱신"]
-    security -->|"경고 발견"| task
-    e2e -->|"실패"| task
-
-    task --> humanAssign["사람이 Issue를 Copilot에 할당"]
-    humanAssign --> cloudAgent["00 환경의 Cloud Agent가<br/>코드·dependency 수정 및 테스트"]
-    cloudAgent --> pullRequest["수정 Draft PR"]
-    pullRequest --> validation["기존 01 PR Validation"]
-    validation --> humanReview["사람의 review · approve · merge"]
-    humanReview --> production["기존 02 Production Deployment"]
+    alt 업데이트·경고·실패 없음
+        Actions-->>Human: Job Summary와 artifact 보고
+    else 조치 대상 발견
+        Actions->>Issue: 중복 방지된 Agent-ready Issue 생성·갱신
+        Issue-->>Human: 진단 근거와 완료 조건 제공
+        Human->>Agent: Issue를 Copilot에 할당
+        Agent->>Actions: 00 재현 환경 준비
+        Agent->>Agent: 코드·dependency 수정 및 regression test
+        Agent->>PR: Draft PR 생성
+        Human->>PR: 변경 범위 확인 후 Ready 전환
+        PR->>Actions: 기존 01 PR Validation
+        Actions-->>Human: 품질·E2E·CodeQL 결과
+        Human->>PR: 리뷰·승인·병합
+        PR->>Actions: 기존 02 Production Deployment
+    end
 ```
 
 `03`~`05`는 진단과 Issue 생성까지만 담당합니다. source code 수정, Copilot 할당,
