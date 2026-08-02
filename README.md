@@ -47,107 +47,46 @@ sequenceDiagram
     participant PR as Pull Request
     participant Azure as Azure Container Apps
 
-    Human->>Issue: 개발 과업 등록
-    Human->>Agent: Issue를 Copilot에 할당
-    Agent->>Actions: 00 재현 환경 준비
-    Actions-->>Agent: Python · Node · 의존성 준비 완료
-    Agent->>Agent: 코드 수정 및 단위·회귀 테스트
-    Agent->>PR: Draft PR 생성
-    Human->>PR: 계획·변경 범위 확인 후 Ready 전환
-    PR->>Actions: 01 PR Validation 실행
-    Actions->>Actions: PR 1/2 품질·E2E 테스트
-    Actions->>Actions: PR 2/2 CodeQL
-    Actions-->>Human: required checks 통과
-    Human->>PR: 기능·보안 리뷰 후 병합 승인
-    PR->>Actions: main 병합으로 02 실행
-    Actions->>Actions: Main 1/3 병합 결과 재검증 (main에 실제 반영된 코드 다시 테스트)
-    Actions->>Issue: Main 2/3 운영 승인 링크
+    Human->>Issue: 과업 등록 후 Copilot 할당
+    Issue->>Agent: 작업 전달
+    Agent->>Actions: 00 개발 환경 준비
+    Agent->>PR: 코드·테스트와 Draft PR
+    Human->>PR: Ready 전환
+    PR->>Actions: 01 품질·E2E·CodeQL 검증
+    Actions-->>Human: required checks 결과
+    Human->>PR: 리뷰·승인·main 병합
+    PR->>Actions: 02 병합 결과 재검증
+    Actions->>Issue: 운영 승인 링크
     Human->>Actions: production Environment 승인
-    Actions->>Azure: Main 3/3 OIDC · ACR · ACA 배포
-    Azure-->>Actions: Web · API HTTPS smoke 결과
-    Actions-->>Human: 배포 결과 보고
+    Actions->>Azure: OIDC · ACR · ACA 배포와 HTTPS smoke
+    Azure-->>Human: 배포 결과
 ```
 
 ### 00 · Cloud Agent 재현 환경과 작업 할당
 
-Issue를 Copilot에 할당해 Agent job이 시작되면 00이 Python·Node와 프로젝트 의존성을
-준비합니다. Cloud Agent가 매번 같은 조건에서 개발·테스트할 수 있게 한 뒤 작업을
-넘기며, 아래 채널 중 하나에서 이 흐름을 시작합니다.
-
-#### GitHub Issue
-
-1. `agent-ready` Issue를 생성합니다.
-2. Assignee에서 **Copilot**을 선택합니다.
-3. Agent session에서 계획·실행 로그를 확인합니다.
-4. PR에서 workflow 변경 여부를 검토한 후 필요한 경우 **Approve and run workflows**를 선택합니다.
-5. 후속 수정은 기존 PR에 `@copilot` 댓글로 요청합니다.
-6. 요청자와 다른 독립 reviewer가 승인한 뒤 병합합니다.
-
-#### Jira
-
-실제 Jira용 GitHub Copilot 연동을 설치하면 Jira Assignee 또는 `@GitHub Copilot`
-댓글로 직접 Agent 작업을 시작할 수 있습니다. 자세한 순서는 발표 자료의
-**실행 튜토리얼**을 참고하세요.
-
-#### Slack
-
-GitHub App for Slack을 설치하고 DM 또는 비민감 thread에서 `@GitHub Copilot`을 호출합니다. Slack은 요청·상태 공유, Jira는 업무 추적, GitHub PR은 코드 검토의 기준 채널로 사용합니다.
+- **시작:** GitHub Issue Assignee, Jira Assignee/댓글 또는 Slack에서 Copilot에 과업 할당
+- **Actions:** Python·Node와 프로젝트 의존성을 동일한 조건으로 준비
+- **Cloud Agent:** 코드 수정·테스트 후 Draft PR 생성
+- **사람:** 계획과 변경 범위를 확인하고 Ready 전환, 후속 작업은 기존 PR의 `@copilot`으로 요청
 
 ### 01 · PR Validation — Quality and CodeQL
 
-| Job | 수행 작업 | 실행 시점 |
-|---|---|---|
-| PR 1/2 · Quality validation | Python·React·Playwright 실행 요약·artifact | Ready for review PR |
-| PR 2/2 · CodeQL security | Python·JavaScript/TypeScript 취약점 분석 | PR 1/2 성공 후 |
-
-Copilot이 만든 Draft/WIP PR에서는 01을 실행하지 않습니다. 사람이 계획과 변경 범위를
-확인하고 **Ready for review**로 전환하면 PR 1/2~2/2를 순서대로 한 번 수행합니다.
-Ready 이후 commit이 추가되면 Actions에서 `01 · PR Validation`을 열고 **PR의 head
-branch**를 선택해 수동으로 다시 실행합니다.
+- **시작:** Draft PR을 사람이 **Ready for review**로 전환
+- **PR 1/2:** Python·React·Playwright 품질·E2E 검증
+- **PR 2/2:** Python·JavaScript/TypeScript CodeQL 분석
+- **결과:** required checks, Job Summary, 실패 artifact
+- **재실행:** Ready 이후 commit이 추가되면 PR의 head branch로 수동 실행
 
 ### 02 · Production Deployment — Evaluate, Approve, Deploy
 
-| Job | 수행 작업 | 실행 시점 |
-|---|---|---|
-| Main 1/3 · Post-merge evaluation | main에 실제 반영된 코드를 기능·E2E로 다시 테스트 | `main` 병합 후 |
-| Main 2/3 · Production approval notice | 원본 Issue에 승인 링크 알림 | Main 1/3 성공 후 |
-| Main 3/3 · Production approval and ACA deployment | 승인 후 OIDC·ACR·ACA 배포 | 운영 승인 후 |
+- **시작:** PR을 `main`에 병합
+- **Main 1/3:** main에 실제 반영된 코드를 기능·E2E로 다시 테스트
+- **Main 2/3:** 원본 Issue에 운영 승인 링크 제공
+- **Main 3/3:** 사람의 `production` 승인 후 OIDC·ACR·ACA 배포와 HTTPS smoke
+- **설정:** `ACA_DEPLOYMENT_ENABLED=true`, 자세한 내용은 [Azure 배포 가이드](docs/azure-container-apps-deployment.md) 참고
 
-`main` 병합이 곧바로 운영 변경을 만들지는 않습니다. Main 1/3 재검증에 성공한 뒤
-`production` Environment의 required reviewer가 승인해야 배포가 시작됩니다.
-
-```text
-main merge
-  → main에 실제 반영된 코드를 unit/integration/E2E로 다시 테스트
-  → ACA_DEPLOYMENT_ENABLED 확인
-      ├─ false: 승인 알림·배포를 정상 skip
-      └─ true: production Environment required reviewer 대기
-  → GitHub OIDC 로그인
-  → ACR build + Container Apps revision
-  → 테스트 앱 URL과 Web·Meeting API health check 보고
-```
-
-배포 후 공개 URL은 테스트 앱 `agentworkflow-web` 하나이며 회의실·예약·Mini Agent
-기능을 제공합니다. `agentworkflow-meeting-api`는 테스트 앱만 호출하는 내부 ACA로
-유지합니다.
-
-Azure client secret은 사용하지 않습니다. 실제 subscription·region·resource group과
-required reviewer 구성은
-[`docs/azure-container-apps-deployment.md`](docs/azure-container-apps-deployment.md)를
-따릅니다. 현재 SQLite 데이터는 revision-local인 POC 구성이므로 운영 전에는 managed
-database로 전환해야 합니다. Repository variable `ACA_DEPLOYMENT_ENABLED`의 기본값은
-비활성이며, `production` 보호와 OIDC 설정을 완료한 뒤에만 `true`로 변경합니다.
-
-배포를 실행하려면 `Settings → Secrets and variables → Actions → Variables`에서
-`ACA_DEPLOYMENT_ENABLED=true`로 변경합니다. PR 병합 전 변경했다면 `main` push run이
-Main 1/3~3/3을 이어서 실행합니다. 이미 `false` 상태로 병합해 Main 2/3·3/3이
-Skipped라면, 값을 `true`로 변경한 뒤 `Actions → 02 · Production Deployment →
-Run workflow`에서 `main`을 선택해 다시 실행합니다. 배포 완료 후에는 `false`로
-복구합니다.
-
-`03`~`05`는 예약 실행이 아니라 담당자가 Actions의 **Run workflow** 버튼으로
-시작합니다. 진단과 Issue 생성까지만 자동화하며 코드 수정·Copilot 할당·PR 생성·병합은
-사람의 명시적 결정 이후에 진행합니다.
+`03`~`05`는 담당자가 **Run workflow**로 시작하며, Actions는 진단과 Issue 생성까지만
+담당합니다.
 
 ### 03 · OSS Upgrade Intake
 
@@ -156,29 +95,26 @@ sequenceDiagram
     autonumber
     actor Human as 담당자
     participant Actions as GitHub Actions
-    participant Repo as 현재 저장소
     participant Registry as PyPI / npm
     participant Issue as GitHub Issue
     participant Agent as Cloud Agent
     participant PR as Pull Request
 
     Human->>Actions: 03에서 Run workflow
-    Actions->>Repo: FastAPI 최소 버전·React lock 버전 확인
-    Actions->>Registry: 최신 stable 버전 조회
-    Registry-->>Actions: FastAPI·React·React DOM 최신 버전
-    Actions->>Actions: 현재 버전과 최신 stable 비교
+    Actions->>Registry: 현재 버전과 최신 stable 비교
     Actions-->>Human: 비교 결과 Job Summary
     Note over Human,Actions: 업데이트가 없으면 여기서 종료
-    Actions->>Issue: Agent-ready 업그레이드 Issue 생성·갱신
+    Actions->>Issue: 업데이트 작업 Issue 생성·갱신
     Human->>Agent: Issue를 Copilot에 할당
-    Agent->>Actions: 00 재현 환경 준비
     Agent->>PR: dependency 수정·회귀 테스트 후 Draft PR
-    Human->>PR: Ready 전환
     PR->>Actions: 01 PR Validation
 ```
 
-03은 버전을 직접 올리지 않습니다. 업데이트가 발견된 경우에만 현재/최신 버전과 완료
-조건을 담은 Issue를 만들고, 실제 수정은 사람이 할당한 Cloud Agent가 담당합니다.
+- **시작:** 담당자가 Run workflow
+- **Actions:** FastAPI·React 현재 버전과 registry 최신 stable 비교
+- **정상:** Job Summary만 남기고 종료
+- **업데이트 발견:** Agent-ready Issue 생성·갱신
+- **다음 단계:** 사람이 Copilot에 할당하면 Cloud Agent가 수정 PR 생성
 
 ### 04 · Branch CodeQL Remediation
 
@@ -194,28 +130,22 @@ sequenceDiagram
     participant PR as Pull Request
 
     Human->>Actions: 04에서 target_branch 입력 후 Run workflow
-    Actions->>Repo: Branch 존재 확인·분석 commit 고정 (선택 시점 코드)
-    Repo-->>Actions: 고정된 commit checkout
-    Actions->>Actions: Python·JavaScript/TypeScript CodeQL
-    Actions->>Security: SARIF를 해당 branch 결과로 업로드
+    Actions->>Repo: Branch 확인·선택 시점 commit 고정
+    Actions->>Security: CodeQL 분석·SARIF 업로드
     Actions-->>Human: 심각도 Summary·상세 링크
     Note over Human,Actions: 보안 경고가 없으면 여기서 종료
-    Actions->>Issue: Branch별 Agent-ready 보안 Issue 생성·갱신
+    Actions->>Issue: Branch별 보안 Issue 생성·갱신
     Human->>Agent: Issue를 Copilot에 할당
-    Agent->>Actions: 00 재현 환경 준비
     Agent->>PR: root cause 수정·보안 회귀 테스트 후 Draft PR
-    Human->>PR: Ready 전환
     PR->>Actions: 01 PR Validation과 CodeQL
 ```
 
-04는 입력한 branch가 실제 repository branch인지 먼저 확인하고 그 시점의 commit ID(SHA)를
-고정합니다. 따라서 분석 도중 branch가 이동해도 checkout·SARIF·Security 결과가 같은
-코드를 가리킵니다.
-일반 Dependabot version-update schedule은 데모 noise를 줄이기 위해 제거했습니다.
-Dependabot alerts와 security updates는 repository **Security & analysis** 설정에서
-활성화해 신규 취약점에만 사용합니다.
-이 설정을 켜면 GitHub가 관리하는 **Dependabot Updates**가 Actions에 별도로 보일 수
-있으며, 사용자 정의 04 workflow가 아니라 Security alert 조치 경로입니다.
+- **시작:** 담당자가 분석할 branch를 입력하고 Run workflow
+- **Actions:** 선택 시점의 commit을 고정해 Python·JavaScript/TypeScript CodeQL 실행
+- **정상:** 보안 Summary와 Security 상세 링크만 남기고 종료
+- **경고 발견:** branch별 Agent-ready 보안 Issue 생성·갱신
+- **다음 단계:** 사람이 Copilot에 할당하면 Cloud Agent가 root cause 수정 PR 생성
+- **범위:** Dependabot은 GitHub **Security & analysis**의 별도 관리 경로
 
 ### 05 · Project E2E
 
@@ -231,22 +161,22 @@ sequenceDiagram
     participant PR as Pull Request
 
     Human->>Actions: 05에서 branch 선택 후 Run workflow
-    Actions->>Actions: Python·Node·Chromium 의존성 설치
     Actions->>App: 격리 DB로 API와 Web 기동
     Actions->>Browser: 예약·영어/한국어 Mini Agent 3개 실행
-    Browser-->>Actions: 결과·trace·screenshot·video
-    Actions-->>Human: Job Summary와 Playwright artifact
+    Browser-->>Actions: 결과와 Playwright evidence
+    Actions-->>Human: Job Summary·artifact
     Note over Human,Actions: 3개 scenario가 성공하면 여기서 종료
-    Actions->>Issue: Agent-ready E2E 회귀 Issue 생성·갱신
+    Actions->>Issue: E2E 회귀 Issue 생성·갱신
     Human->>Agent: Issue를 Copilot에 할당
-    Agent->>Actions: 00 재현 환경 준비
     Agent->>PR: 실패 재현·root cause 수정 후 Draft PR
-    Human->>PR: Ready 전환
     PR->>Actions: 01 PR Validation과 E2E 재검증
 ```
 
-05는 테스트 실패를 retry나 threshold 완화로 숨기지 않습니다. 결과 보고와 artifact 업로드
-후 Issue를 만든 다음 workflow 자체도 실패시켜 사람이 조치 필요 상태를 놓치지 않게 합니다.
+- **시작:** 담당자가 branch를 선택하고 Run workflow
+- **Actions:** API·Web을 기동하고 예약·영어/한국어 Mini Agent 3개 시나리오 실행
+- **정상:** Job Summary와 Playwright report를 남기고 종료
+- **실패:** trace·screenshot·video 업로드 후 Agent-ready E2E Issue 생성·갱신
+- **다음 단계:** workflow를 실패 처리하고 사람이 Copilot에 할당해 수정 PR 생성
 
 ## 실제 환경 적용 전 변경할 값
 
