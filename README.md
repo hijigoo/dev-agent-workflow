@@ -20,17 +20,17 @@ GitHub Copilot cloud agent를 팀 개발 프로세스에 편입하는 실행 가
 apps/
   api/                  FastAPI 회의실 예약·비식별 품질 지표 API
   web/                  회의실·Mini Agent 테스트 앱
-scripts/                품질·OSS·CodeQL·E2E 리포트 helper
+scripts/                OSS·CodeQL·E2E 리포트 helper
 tests/                  자동화 스크립트 테스트
 scenarios/              고객 실습용 과업·테스트 시나리오
 .github/
-  agents/               Security/E2E/Quality custom agents
+  agents/               Security/E2E custom agents
   workflows/            CI, CodeQL, E2E, 평가·승인·ACA 배포 workflow
 infra/                   ACR·Container Apps·managed identity Bicep
 docs/                    Azure OIDC와 production 승인 설정 가이드
 ```
 
-현재 GitHub Actions 00~06 호출 흐름과 전체 테스트 튜토리얼은
+현재 GitHub Actions 00~05 호출 흐름과 전체 테스트 튜토리얼은
 [`github-actions-tutorial.html`](github-actions-tutorial.html)에서 확인합니다.
 Agentic DLC 실습과 평가표는
 [`scenarios/agentic-dlc-scenarios.md`](scenarios/agentic-dlc-scenarios.md)를 사용합니다.
@@ -108,9 +108,8 @@ GitHub App for Slack을 설치하고 DM 또는 비민감 thread에서 `@GitHub C
 | 오픈소스 업그레이드 | 수동 FastAPI·React 최신 stable 확인 + Agent-ready Issue |
 | 코드 취약점 | 수동 branch CodeQL + Agent-ready Issue + Copilot 할당 |
 | UI E2E | 수동 Playwright 3개 시나리오 + trace·HTML report artifact |
-| 답변 품질 | Mini Agent 영어·한국어 기대 답변 E2E + 비식별 주간 scorecard 예시 |
+| 답변 품질 | Mini Agent 영어·한국어 기대 답변 Playwright E2E |
 | 신규 기능 | Issue template + custom agents + required checks |
-| 로그 모니터링 | `weekly-quality-review.yml` + `scripts/build_quality_report.py` |
 | 승인 후 Azure 배포 | 원본 Issue 승인 대기 알림 + `production` Environment + ACA |
 
 ## GitHub Actions 데모 순서
@@ -123,10 +122,9 @@ PR 검증과 Main 배포를 서로 다른 workflow로 분리해 실행 원인과
 | 00 | Cloud Agent — Reproducible Setup | Copilot Agent job 내부 환경 준비 |
 | 01 | PR Validation — Quality and CodeQL | Ready PR 품질·보안 검증 |
 | 02 | Production Deployment — Evaluate, Approve, Deploy | Main 재평가·운영 승인·ACA 배포 |
-| 03 | Optional — Scheduled Security and Quality Review | 주간 CodeQL·선택형 품질 리포트 |
-| 04 | Manual — OSS Upgrade Intake | FastAPI·React 최신 stable 확인과 작업 Issue |
-| 05 | Manual — Branch CodeQL Remediation | 선택 branch CodeQL과 보안 작업 Issue |
-| 06 | Manual — Project E2E | 예약·Mini Agent Playwright 3개 시나리오 |
+| 03 | Manual — OSS Upgrade Intake | FastAPI·React 최신 stable 확인과 작업 Issue |
+| 04 | Manual — Branch CodeQL Remediation | 선택 branch CodeQL과 보안 작업 Issue |
+| 05 | Manual — Project E2E | 예약·Mini Agent Playwright 3개 시나리오 |
 
 | 구간 | Job | 데모 목적 | 실행 시점 |
 |---|---|---|---|
@@ -143,18 +141,15 @@ workflow run 자체가 생성되지 않습니다. Ready 이후 commit이 추가�
 `01 · PR Validation`을 열고 **PR의 head branch**를 선택해 수동 실행합니다. CodeQL은
 PR 2/2에서 한 번 실행하고 merge 후에는 다시 실행하지 않습니다.
 
-`03 · Optional — Scheduled Security and Quality Review`는 주간 CodeQL과 수동
-비식별 품질 검토를 담당합니다.
-
-`04`~`06`은 예약 실행이 아니라 Actions의 **Run workflow** 버튼으로만 시작합니다.
+`03`~`05`는 예약 실행이 아니라 Actions의 **Run workflow** 버튼으로만 시작합니다.
 진단 결과가 있으면 코드나 PR을 직접 만들지 않고 `agent-ready` Issue까지만 생성합니다.
 사람이 Issue의 Assignee로 Copilot을 선택하면 Cloud Agent가 별도 branch에서 수정과
 regression test를 수행하고 draft PR을 만듭니다. 이 PR은 다시 기존 `01` 검증과 사람
 승인을 거쳐야 합니다.
 
-- `04`: FastAPI 최소 지원 버전과 React/React DOM lock 버전을 registry 최신 stable과 비교
-- `05`: 입력한 같은 저장소 branch를 Python·JavaScript/TypeScript CodeQL로 분석
-- `06`: 실제 Meeting API·Web을 기동해 기존 Playwright 예약·Mini Agent E2E 실행
+- `03`: FastAPI 최소 지원 버전과 React/React DOM lock 버전을 registry 최신 stable과 비교
+- `04`: 입력한 같은 저장소 branch를 Python·JavaScript/TypeScript CodeQL로 분석
+- `05`: 실제 Meeting API·Web을 기동해 기존 Playwright 예약·Mini Agent E2E 실행
 
 일반 Dependabot version-update schedule은 데모 noise를 줄이기 위해 제거했습니다.
 Dependabot alerts와 security updates는 repository **Security & analysis** 설정에서

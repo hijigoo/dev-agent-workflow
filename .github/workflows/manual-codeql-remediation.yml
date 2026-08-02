@@ -1,5 +1,5 @@
-name: "05 · Manual — Branch CodeQL Remediation"
-run-name: "05 · CodeQL · ${{ inputs.target_branch }}"
+name: "04 · Manual — Branch CodeQL Remediation"
+run-name: "04 · CodeQL · ${{ inputs.target_branch }}"
 
 on:
   workflow_dispatch:

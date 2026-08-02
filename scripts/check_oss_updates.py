@@ -167,7 +167,7 @@ def build_report(
 
     return "\n".join(
         [
-            "# 04 · OSS Upgrade Intake",
+            "# 03 · OSS Upgrade Intake",
             "",
             "| 오픈소스 | 현재 기준 | 최신 stable | 판정 |",
             "|---|---|---|---|",

@@ -90,7 +90,7 @@ def build_report(
     ]
     report = "\n".join(
         [
-            "# 06 · Manual Project E2E",
+            "# 05 · Manual Project E2E",
             "",
             f"- **실행 SHA:** `{sha}`",
             f"- **Playwright step:** `{runner_outcome}`",

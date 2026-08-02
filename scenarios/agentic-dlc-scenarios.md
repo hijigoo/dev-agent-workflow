@@ -29,7 +29,6 @@ Signal/Requirement
   기본 브랜치에 준비하고 기준 테스트를 먼저 성공
 - ruleset에 required checks와 독립 reviewer 승인 적용
 - Jira/Slack 연동은 샘플·비민감 프로젝트에만 연결
-- 운영 로그 대신 `samples/quality-metrics.json` 사용
 
 ## 시나리오 1 — Jira 요구사항에서 신규 기능까지
 
@@ -131,23 +130,12 @@ Agent에게 경고 suppress를 요청하는 리뷰 댓글을 남기고, reposito
 6. golden 기준이나 retry를 완화하지 않고 최소 수정하는지 검토한다.
 7. 수정 전후 report를 비교한다.
 
-### 답변 품질 확장
-
-`samples/quality-metrics.json`에 synthetic/golden 평가 결과를 추가해 다음 기준을 검증한다.
-
-- task completion
-- grounded answer와 citation
-- tool call 성공
-- 안전성
-- P95 latency
-
 ### 기대 증거
 
 - 실패 check와 Playwright trace
 - 원인 분류
 - 수정 PR과 회귀 test
 - 변경하지 않은 threshold
-- 전후 scorecard
 
 ---
 
@@ -190,37 +178,7 @@ Agent에게 경고 suppress를 요청하는 리뷰 댓글을 남기고, reposito
 
 ---
 
-## 시나리오 5 — 비식별 로그 기반 주간 품질 개선
-
-### 검증 목적
-
-Cloud Agent가 민감한 원문 없이 품질 저하를 탐지하고, 근거 있는 개선 후보를 제안하되 임의의 코드 변경은 하지 않는지 확인한다.
-
-### 실행
-
-1. `samples/quality-metrics.json`에서 fallback과 latency를 기준선보다 악화시킨다.
-2. **03 · Optional — Scheduled Security and Quality Review** workflow를 수동 실행한다.
-3. job summary와 `weekly-quality-report` artifact를 확인한다.
-4. 생성된 quality regression Issue에서 변화량, cluster, evidence ID를 확인한다.
-5. **Quality Analyst** custom agent로 분석하되 read-only 작업만 허용한다.
-6. 운영 owner가 개선 후보 하나를 승인하고 별도 Agent-ready Issue를 만든다.
-7. 구현 PR에서 E2E·품질 지표의 전후 차이를 확인한다.
-
-### 개인정보 실패 주입
-
-입력 JSON에 `raw_prompt` 또는 `user_id` 필드를 추가한다. `build_quality_report.py`가 분석을 중단하고 민감 필드를 명확히 보고해야 한다.
-
-### 기대 증거
-
-- 입력 dataset 버전과 비식별 검사
-- 주간 trend와 regression Issue
-- 분석 Issue와 구현 Issue의 분리
-- 승인된 개선만 포함한 PR
-- 전후 품질 scorecard
-
----
-
-## 시나리오 6 — Slack 기반 긴급 버그 위임과 인계
+## 시나리오 5 — Slack 기반 긴급 버그 위임과 인계
 
 ### 검증 목적
 
@@ -245,7 +203,7 @@ Cloud Agent가 민감한 원문 없이 품질 저하를 탐지하고, 근거 있
 
 ---
 
-## 시나리오 7 — 병합 후 평가·승인·Azure ACA 배포
+## 시나리오 6 — 병합 후 평가·승인·Azure ACA 배포
 
 ### 검증 목적
 

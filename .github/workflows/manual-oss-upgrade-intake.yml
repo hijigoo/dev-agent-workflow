@@ -1,5 +1,5 @@
-name: "04 · Manual — OSS Upgrade Intake"
-run-name: "04 · OSS upgrade intake · ${{ github.sha }}"
+name: "03 · Manual — OSS Upgrade Intake"
+run-name: "03 · OSS upgrade intake · ${{ github.sha }}"
 
 on:
   workflow_dispatch:

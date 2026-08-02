@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta
     name="description"
-    content="dev-agent-workflow의 GitHub Actions 00~06 호출 흐름과 전체 테스트 튜토리얼"
+    content="dev-agent-workflow의 GitHub Actions 00~05 호출 흐름과 전체 테스트 튜토리얼"
   >
-  <title>GitHub Actions 00~06 실행 지도와 튜토리얼</title>
+  <title>GitHub Actions 00~05 실행 지도와 튜토리얼</title>
   <script>
     (() => {
       const param = new URLSearchParams(window.location.search).get("scoutTheme");
@@ -540,7 +540,7 @@
 <body>
   <header class="topbar">
     <div class="shell topbar-inner">
-      <a class="brand" href="#top">Actions 00~06 실행 지도</a>
+      <a class="brand" href="#top">Actions 00~05 실행 지도</a>
       <div class="actions">
         <a
           class="button"
@@ -559,14 +559,14 @@
         <p class="eyebrow">GitHub Actions · Cloud Agent Tutorial</p>
         <h1>누가 호출하고,<br>어디서 멈추는지 한눈에</h1>
         <p class="lead">
-          기존 00~03 개발·배포 흐름과 신규 04~06 수동 진단을 하나의 지도에 연결했습니다.
+          기존 00~02 개발·배포 흐름과 신규 03~05 수동 진단을 하나의 지도에 연결했습니다.
           아래 튜토리얼에서 성공, Python 실패, CodeQL 실패, OSS 점검, branch 보안 검사,
           프로젝트 E2E와 배포 승인 모드를 순서대로 확인할 수 있습니다.
         </p>
         <div class="badge-row">
-          <span class="badge accent">7 workflows</span>
-          <span class="badge">기존 00~03 유지</span>
-          <span class="badge">04~06 버튼 실행</span>
+          <span class="badge accent">6 workflows</span>
+          <span class="badge">기존 00~02 유지</span>
+          <span class="badge">03~05 버튼 실행</span>
           <span class="badge warning">사람이 Copilot 할당</span>
           <span class="badge danger">자동 merge 없음</span>
         </div>
@@ -582,7 +582,7 @@
           </div>
           <p>
             파란색은 GitHub Actions, 노란색은 사람 승인, 붉은색은 Cloud Agent 작업입니다.
-            04~06은 문제를 찾아도 PR을 직접 만들지 않고 Issue에서 멈춥니다.
+            03~05는 문제를 찾아도 PR을 직접 만들지 않고 Issue에서 멈춥니다.
           </p>
         </div>
 
@@ -632,18 +632,7 @@
           </article>
 
           <article class="lane">
-            <div class="lane-title">03 정기·품질</div>
-            <div class="flow">
-              <div class="node"><strong>매주 Schedule</strong><p>main CodeQL만 실행</p></div>
-              <div class="arrow">↔</div>
-              <div class="node human"><strong>Run workflow</strong><p>수동 비식별 품질 리포트</p></div>
-              <div class="arrow">→</div>
-              <div class="node"><strong>저하 판정</strong><p>summary·artifact·검토 Issue</p></div>
-            </div>
-          </article>
-
-          <article class="lane">
-            <div class="lane-title">04 OSS 점검</div>
+            <div class="lane-title">03 OSS 점검</div>
             <div class="flow">
               <div class="node human"><strong>Run workflow</strong><p>담당자가 버튼 실행</p></div>
               <div class="arrow">→</div>
@@ -660,7 +649,7 @@
           </article>
 
           <article class="lane">
-            <div class="lane-title">05 Branch CodeQL</div>
+            <div class="lane-title">04 Branch CodeQL</div>
             <div class="flow">
               <div class="node human"><strong>Branch 입력</strong><p>main 또는 개발·데모 branch</p></div>
               <div class="arrow">→</div>
@@ -677,7 +666,7 @@
           </article>
 
           <article class="lane">
-            <div class="lane-title">06 Project E2E</div>
+            <div class="lane-title">05 Project E2E</div>
             <div class="flow">
               <div class="node human"><strong>Run workflow</strong><p>검사할 branch에서 실행</p></div>
               <div class="arrow">→</div>
@@ -708,7 +697,7 @@
             <p class="eyebrow">Trigger catalog</p>
             <h2>무엇이 각 workflow를 호출하나</h2>
           </div>
-          <p>04~06은 자동 감지가 아니라 운영자가 필요할 때 버튼으로 현재 상태를 검사합니다.</p>
+          <p>03~05는 자동 감지가 아니라 운영자가 필요할 때 버튼으로 현재 상태를 검사합니다.</p>
         </div>
         <div class="table-wrap">
           <table>
@@ -724,10 +713,9 @@
               <tr><td><strong>00</strong></td><td>수동·관련 setup 파일 변경</td><td>Cloud Agent 개발 환경 설치</td><td>설치 로그</td></tr>
               <tr><td><strong>01</strong></td><td>PR Ready for review·수동</td><td>Python·Web·E2E 후 CodeQL</td><td>Check·summary·artifact·병합 gate</td></tr>
               <tr><td><strong>02</strong></td><td>main push·수동</td><td>재평가, 승인 알림, Azure 배포</td><td>사람 승인 또는 안전한 skip</td></tr>
-              <tr><td><strong>03</strong></td><td>주간 schedule·수동</td><td>schedule은 CodeQL, 수동은 품질 report</td><td>Code scanning 또는 품질 Issue</td></tr>
-              <tr><td><strong>04</strong></td><td>수동 버튼만</td><td>FastAPI·React stable 비교</td><td>summary·Agent-ready Issue</td></tr>
-              <tr><td><strong>05</strong></td><td>수동 버튼 + target_branch</td><td>선택 branch CodeQL</td><td>Code scanning·보안 Issue</td></tr>
-              <tr><td><strong>06</strong></td><td>수동 버튼만</td><td>프로젝트 Playwright 3개</td><td>summary·artifact·실패 Issue</td></tr>
+              <tr><td><strong>03</strong></td><td>수동 버튼만</td><td>FastAPI·React stable 비교</td><td>summary·Agent-ready Issue</td></tr>
+              <tr><td><strong>04</strong></td><td>수동 버튼 + target_branch</td><td>선택 branch CodeQL</td><td>Code scanning·보안 Issue</td></tr>
+              <tr><td><strong>05</strong></td><td>수동 버튼만</td><td>프로젝트 Playwright 3개</td><td>summary·artifact·실패 Issue</td></tr>
             </tbody>
           </table>
         </div>
@@ -762,7 +750,7 @@
               <ul class="steps">
                 <li class="step"><input type="checkbox" id="s00-1"><label for="s00-1">신규 workflow 변경 PR을 기존 01로 검증합니다.<small>04~06 Run workflow 버튼은 YAML이 default branch에 병합된 뒤 표시됩니다.</small></label></li>
                 <li class="step"><input type="checkbox" id="s00-2"><label for="s00-2">리뷰어가 신규 권한과 Issue 경계를 확인한 뒤 병합합니다.<small>자동 merge는 사용하지 않습니다.</small></label></li>
-                <li class="step"><input type="checkbox" id="s00-3"><label for="s00-3">Repository Actions에서 00~06이 모두 보이는지 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s00-3"><label for="s00-3">Repository Actions에서 00~05 여섯 workflow가 모두 보이는지 확인합니다.</label></li>
               </ul>
             </div>
           </details>
@@ -832,35 +820,23 @@
           </details>
 
           <details>
-            <summary>모드 6 · 03 수동 품질 리포트와 예약 CodeQL</summary>
+            <summary>모드 6 · 03 OSS 최신 버전 점검</summary>
             <div class="tutorial-body">
               <ul class="steps">
-                <li class="step"><input type="checkbox" id="s06-1"><label for="s06-1">Actions → 03 → Run workflow를 실행합니다.</label></li>
-                <li class="step"><input type="checkbox" id="s06-2"><label for="s06-2">수동 실행에서는 품질 report가 실행되고 Scheduled CodeQL은 Skipped되는지 확인합니다.</label></li>
-                <li class="step"><input type="checkbox" id="s06-3"><label for="s06-3">Job Summary, 30일 artifact, 저하가 있으면 품질 Issue를 확인합니다.</label></li>
-                <li class="step"><input type="checkbox" id="s06-4"><label for="s06-4">예약 CodeQL은 다음 화요일 17:43 UTC schedule run에서 확인합니다.<small>workflow_dispatch는 schedule event를 흉내 내지 않으므로 버튼으로 예약 분기를 실행할 수 없습니다.</small></label></li>
-              </ul>
-            </div>
-          </details>
-
-          <details>
-            <summary>모드 7 · 04 OSS 최신 버전 점검</summary>
-            <div class="tutorial-body">
-              <ul class="steps">
-                <li class="step"><input type="checkbox" id="s07-1"><label for="s07-1">Actions → 04 → Run workflow를 main에서 실행합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s07-1"><label for="s07-1">Actions → 03 → Run workflow를 main에서 실행합니다.</label></li>
                 <li class="step"><input type="checkbox" id="s07-2"><label for="s07-2">Summary에서 FastAPI 현재 최소 버전과 React·React DOM lock 버전을 확인합니다.</label></li>
                 <li class="step"><input type="checkbox" id="s07-3"><label for="s07-3">업데이트가 있으면 <code>agent-ready</code> Issue 하나가 생성·갱신되는지 확인합니다.</label></li>
                 <li class="step"><input type="checkbox" id="s07-4"><label for="s07-4">Issue를 Copilot에 할당해 upgrade·호환 수정·전체 테스트·Draft PR 생성을 확인합니다.</label></li>
               </ul>
-              <div class="expected"><strong>경계:</strong> 04 Actions는 manifest를 직접 수정하지 않습니다. PR은 Cloud Agent가 만듭니다.</div>
+              <div class="expected"><strong>경계:</strong> 03 Actions는 manifest를 직접 수정하지 않습니다. PR은 Cloud Agent가 만듭니다.</div>
             </div>
           </details>
 
           <details>
-            <summary>모드 8 · 05 선택 branch CodeQL과 보안 Issue</summary>
+            <summary>모드 7 · 04 선택 branch CodeQL과 보안 Issue</summary>
             <div class="tutorial-body">
               <ul class="steps">
-                <li class="step"><input type="checkbox" id="s08-1"><label for="s08-1">Actions → 05 → Run workflow를 엽니다.</label></li>
+                <li class="step"><input type="checkbox" id="s08-1"><label for="s08-1">Actions → 04 → Run workflow를 엽니다.</label></li>
                 <li class="step"><input type="checkbox" id="s08-2"><label for="s08-2"><code>target_branch</code>에 <code>demo/codeql-summary-report</code>를 입력해 실행합니다.</label></li>
                 <li class="step"><input type="checkbox" id="s08-3"><label for="s08-3">Summary의 High 건수와 Security → Code scanning의 branch filter 링크를 확인합니다.</label></li>
                 <li class="step"><input type="checkbox" id="s08-4"><label for="s08-4">branch별 Agent-ready 보안 Issue 하나가 생성·갱신되는지 확인합니다.</label></li>
@@ -871,13 +847,13 @@
           </details>
 
           <details>
-            <summary>모드 9 · 06 프로젝트 E2E 성공·실패</summary>
+            <summary>모드 8 · 05 프로젝트 E2E 성공·실패</summary>
             <div class="tutorial-body">
               <ul class="steps">
-                <li class="step"><input type="checkbox" id="s09-1"><label for="s09-1">Actions → 06 → Run workflow를 main에서 실행합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s09-1"><label for="s09-1">Actions → 05 → Run workflow를 main에서 실행합니다.</label></li>
                 <li class="step"><input type="checkbox" id="s09-2"><label for="s09-2">예약 UI, 영어 Mini Agent, 한국어 room-search 3개가 성공하는지 확인합니다.</label></li>
                 <li class="step"><input type="checkbox" id="s09-3"><label for="s09-3">scenario별 Summary와 Playwright HTML·trace·screenshot·video artifact를 확인합니다.</label></li>
-                <li class="step"><input type="checkbox" id="s09-4"><label for="s09-4">실패 모드는 main에서 새 데모 branch를 만든 뒤 <code>platform.spec.ts</code> expectation 하나를 의도적으로 틀리게 바꾸고, Actions의 branch 선택에서 그 branch로 06을 실행합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s09-4"><label for="s09-4">실패 모드는 main에서 새 데모 branch를 만든 뒤 <code>platform.spec.ts</code> expectation 하나를 의도적으로 틀리게 바꾸고, Actions의 branch 선택에서 그 branch로 05를 실행합니다.</label></li>
                 <li class="step"><input type="checkbox" id="s09-5"><label for="s09-5">실패 evidence·Agent-ready E2E Issue가 먼저 생성되고 workflow가 마지막에 실패하는지 확인합니다.</label></li>
                 <li class="step"><input type="checkbox" id="s09-6"><label for="s09-6">데모 branch와 Issue를 정리하고 절대 병합하지 않습니다.</label></li>
               </ul>
@@ -888,7 +864,7 @@
             <summary>마무리 · Cloud Agent PR의 공통 검증</summary>
             <div class="tutorial-body">
               <ul class="steps">
-                <li class="step"><input type="checkbox" id="s10-1"><label for="s10-1">04·05·06 Issue를 Copilot에 할당해 만든 PR이 Draft인지 확인합니다.</label></li>
+                <li class="step"><input type="checkbox" id="s10-1"><label for="s10-1">03·04·05 Issue를 Copilot에 할당해 만든 PR이 Draft인지 확인합니다.</label></li>
                 <li class="step"><input type="checkbox" id="s10-2"><label for="s10-2">사람이 기능·보안·의존성 변경과 test evidence를 검토합니다.</label></li>
                 <li class="step"><input type="checkbox" id="s10-3"><label for="s10-3">Ready 전환 후 기존 01 전체 검증을 통과해야만 승인합니다.</label></li>
                 <li class="step"><input type="checkbox" id="s10-4"><label for="s10-4">고의 실패·취약점 PR과 임시 branch를 모두 닫고 삭제합니다.</label></li>
@@ -901,7 +877,7 @@
   </main>
 
   <footer class="footer">
-    <div class="shell">GitHub Actions 00~06 실행 지도 · 모든 변경은 사람의 승인 뒤 병합</div>
+    <div class="shell">GitHub Actions 00~05 실행 지도 · 모든 변경은 사람의 승인 뒤 병합</div>
   </footer>
 
   <script>

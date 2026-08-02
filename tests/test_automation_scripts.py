@@ -18,87 +18,9 @@ def load_script(name: str):
     return module
 
 
-quality_report = load_script("build_quality_report")
 oss_updates = load_script("check_oss_updates")
 codeql_summary = load_script("summarize_codeql_sarif")
 playwright_summary = load_script("summarize_playwright")
-
-
-class QualityReportTests(unittest.TestCase):
-    def test_regressions_are_reported(self):
-        payload = {
-            "period": "week",
-            "baseline_period": "baseline",
-            "metrics": {
-                "success": {
-                    "current": 0.8,
-                    "baseline": 1.0,
-                    "lower_is_bad": False,
-                },
-                "latency": {
-                    "current": 120,
-                    "baseline": 100,
-                    "lower_is_bad": True,
-                },
-            },
-            "clusters": [],
-        }
-
-        report, count = quality_report.build_report(payload, threshold=0.1)
-
-        self.assertEqual(count, 2)
-        self.assertIn("`success`", report)
-        self.assertIn("`latency`", report)
-        self.assertEqual(report.count("⚠️ 기준 대비 저하"), 2)
-        self.assertIn("‘기준 대비 저하’란?", report)
-        self.assertNotIn("REGRESSION", report)
-
-    def test_known_metrics_are_explained_in_korean(self):
-        payload = {
-            "period": "week",
-            "baseline_period": "previous-4-weeks",
-            "metrics": {
-                "task_completion_rate": {
-                    "current": 0.91,
-                    "baseline": 0.94,
-                    "lower_is_bad": False,
-                },
-                "p95_latency_ms": {
-                    "current": 4200,
-                    "baseline": 3600,
-                    "lower_is_bad": True,
-                },
-            },
-            "clusters": [
-                {
-                    "name": "provider-timeout",
-                    "count": 18,
-                    "evidence": "aggregate:provider-timeout",
-                }
-            ],
-        }
-
-        report, count = quality_report.build_report(payload, threshold=0.1)
-
-        self.assertEqual(count, 1)
-        self.assertIn("작업 완료율", report)
-        self.assertIn("응답 지연시간(P95)", report)
-        self.assertIn("91.0%", report)
-        self.assertIn("+600 ms", report)
-        self.assertIn("+16.7%", report)
-        self.assertIn("외부 제공자 응답 시간 초과", report)
-        self.assertIn("직전 4주 평균", report)
-        self.assertIn("✅ 허용 범위", report)
-
-    def test_sensitive_fields_are_rejected(self):
-        payload = {
-            "metrics": {},
-            "clusters": [],
-            "raw_prompt": "must not be processed",
-        }
-
-        with self.assertRaisesRegex(ValueError, "sensitive field"):
-            quality_report.build_report(payload)
 
 
 class OssUpgradeTests(unittest.TestCase):
@@ -323,22 +245,24 @@ class PullRequestWorkflowTests(unittest.TestCase):
         self.assertIn('name: "PR 2/2 · CodeQL security"', workflow)
         self.assertNotIn("push:", workflow)
 
-    def test_codeql_runs_for_pr_and_schedule_but_not_after_merge(self):
+    def test_codeql_runs_for_pr_and_manual_branch_but_not_after_merge(self):
         pr = (ROOT / ".github" / "workflows" / "pr-validation.yml").read_text(
             encoding="utf-8"
         )
         deployment = (
             ROOT / ".github" / "workflows" / "production-deployment.yml"
         ).read_text(encoding="utf-8")
-        optional = (
-            ROOT / ".github" / "workflows" / "weekly-quality-review.yml"
+        manual = (
+            ROOT / ".github" / "workflows" / "manual-codeql-remediation.yml"
         ).read_text(encoding="utf-8")
 
         self.assertIn("security:", pr)
         self.assertEqual(pr.count("github/codeql-action/init@v4"), 1)
         self.assertNotIn("github/codeql-action/init@v4", deployment)
-        self.assertIn("Scheduled CodeQL security", optional)
-        self.assertEqual(optional.count("github/codeql-action/init@v4"), 1)
+        self.assertEqual(manual.count("github/codeql-action/init@v4"), 1)
+        self.assertFalse(
+            (ROOT / ".github" / "workflows" / "weekly-quality-review.yml").exists()
+        )
 
     def test_quality_validation_is_reused_for_pr_and_main(self):
         pr = (ROOT / ".github" / "workflows" / "pr-validation.yml").read_text(
@@ -364,11 +288,6 @@ class PullRequestWorkflowTests(unittest.TestCase):
         self.assertIn("Write validation summary", action)
         self.assertIn("$GITHUB_STEP_SUMMARY", action)
         self.assertNotIn("quality-report.md", action)
-
-        optional = (
-            ROOT / ".github" / "workflows" / "weekly-quality-review.yml"
-        ).read_text(encoding="utf-8")
-        self.assertIn("quality-report.md", optional)
 
 
 class ManualAgentWorkflowTests(unittest.TestCase):

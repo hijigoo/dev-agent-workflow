@@ -101,7 +101,7 @@ def load_sarif_files(directory: Path) -> list[dict[str, Any]]:
 def build_report(counts: dict[str, int], branch: str, sha: str) -> str:
     return "\n".join(
         [
-            "# 05 · Manual Branch CodeQL",
+            "# 04 · Manual Branch CodeQL",
             "",
             f"- **대상 branch:** `{branch}`",
             f"- **대상 SHA:** `{sha}`",

@@ -6,7 +6,7 @@ This repository demonstrates controlled GitHub Copilot cloud agent workflows.
 
 - `apps/api`: FastAPI meeting-room API. SQLite access stays inside the repository class.
 - `apps/web`: React/TypeScript UI. API DTOs are mapped explicitly in `src/api.ts`.
-- `scripts`: deterministic release detection and privacy-safe aggregate quality reporting.
+- `scripts`: deterministic OSS release, CodeQL SARIF, and Playwright reporting helpers.
 
 ## Required behavior
 
