@@ -47,7 +47,7 @@ sequenceDiagram
     Actions-->>Human: required checks 통과
     Human->>PR: 기능·보안 리뷰 후 병합 승인
     PR->>Actions: main 병합으로 02 실행
-    Actions->>Actions: Main 1/3 병합 SHA 재평가
+    Actions->>Actions: Main 1/3 병합 결과 재검증 (main에 실제 반영된 코드 다시 테스트)
     Actions->>Issue: Main 2/3 운영 승인 링크
     Human->>Actions: production Environment 승인
     Actions->>Azure: Main 3/3 OIDC · ACR · ACA 배포
@@ -61,7 +61,7 @@ sequenceDiagram
 |---|---|---|---|---|
 | 00 | Cloud Agent — Reproducible Setup | Copilot coding agent job | Python·Node·프로젝트 의존성 설치 | Agent가 같은 환경에서 개발·테스트 |
 | 01 | PR Validation — Quality and CodeQL | PR을 Ready for review로 전환하거나 수동 실행 | Python·React·Playwright 회귀 테스트 후 CodeQL | required check와 Job Summary, 실패 artifact |
-| 02 | Production Deployment — Evaluate, Approve, Deploy | `main` 병합 | 병합 SHA 재평가, production 승인, OIDC 기반 ACA 배포 | 승인 전 대기 또는 Web·API smoke 결과 |
+| 02 | Production Deployment — Evaluate, Approve, Deploy | `main` 병합 | 병합 결과 재검증(main에 실제 반영된 코드 다시 테스트), production 승인, OIDC 기반 ACA 배포 | 승인 전 대기 또는 Web·API smoke 결과 |
 | 03 | Manual — OSS Upgrade Intake | 담당자가 Run workflow 실행 | FastAPI·React/React DOM의 현재 버전과 최신 stable 비교 | 최신 상태 summary 또는 Agent-ready Issue |
 | 04 | Manual — Branch CodeQL Remediation | 담당자가 branch를 선택해 Run workflow 실행 | 고정한 branch SHA를 Python·JavaScript/TypeScript CodeQL로 분석 | 보안 summary와 branch별 Agent-ready Issue |
 | 05 | Manual — Project E2E | 담당자가 branch를 선택해 Run workflow 실행 | API·Web 기동 후 예약·영어/한국어 Mini Agent Playwright 실행 | HTML report·trace와 실패 시 Agent-ready Issue |
@@ -257,7 +257,7 @@ PR 생성, 병합, 배포를 자동으로 수행하지 않으므로 모든 변�
 | Agent setup | Cloud Agent user-configured setup | Python·Node와 의존성 준비 | Copilot Agent job 내부 |
 | PR 1/2 | Quality validation | Python·React·Playwright 실행 요약·artifact | Ready for review PR |
 | PR 2/2 | CodeQL security | Python·JavaScript/TypeScript 취약점 분석 | PR 1/2 성공 후 |
-| Main 1/3 | Post-merge evaluation | 병합 SHA의 기능·E2E 재평가 | `main` 병합 후 |
+| Main 1/3 | Post-merge evaluation | main에 실제 반영된 코드를 기능·E2E로 다시 테스트 | `main` 병합 후 |
 | Main 2/3 | Production approval notice | 원본 Issue에 승인 링크 알림 | 재평가 성공 후 |
 | Main 3/3 | Production approval and ACA deployment | 승인 후 OIDC·ACR·ACA 배포 | 운영 승인 후 |
 
@@ -281,7 +281,7 @@ Dependabot alerts와 security updates는 repository **Security & analysis** 설�
 
 ```text
 main merge
-  → post-merge unit/integration/E2E evaluation summary
+  → main에 실제 반영된 코드를 unit/integration/E2E로 다시 테스트
   → ACA_DEPLOYMENT_ENABLED 확인
       ├─ false: 승인 알림·배포를 정상 skip
       └─ true: production Environment required reviewer 대기
