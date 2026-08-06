@@ -71,17 +71,16 @@ sequenceDiagram
     autonumber
     actor Human as 담당자 / Reviewer
     participant Issue as Jira / GitHub Issue
-    participant GitHub as GitHub Cloud Agent Service
     participant Agent as Cloud Agent
     participant Actions as GitHub Actions
     participant PR as Pull Request
     participant Azure as Azure Container Apps
 
     rect rgba(177, 31, 75, 0.10)
-        Note over Human,Agent: 00 · Cloud Agent 환경 구성·개발
+        Note over Human,Actions: 00 · Cloud Agent 준비·개발
         Human->>Issue: 과업 등록 후 Copilot 할당
-        Issue->>GitHub: Cloud Agent 작업 시작
-        GitHub->>Agent: 격리 환경 생성·setup steps 실행
+        Issue->>Agent: 작업 전달
+        Actions->>Agent: 격리 환경 생성·setup steps 실행
         Agent->>PR: 코드·테스트와 Draft PR
     end
     rect rgba(0, 120, 212, 0.10)
