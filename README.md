@@ -33,6 +33,35 @@ GitHub Copilot Cloud Agent가 팀원처럼 개발 과업을 수행하고, GitHub
 | 04 · Branch CodeQL | 선택 branch 보안 분석 | Security 결과 또는 보안 Issue |
 | 05 · Project E2E | 예약·Mini Agent 브라우저 검증 | Playwright report 또는 회귀 Issue |
 
+## 현재 데모 Issue·PR
+
+### 열린 Issue
+
+- [#21 OSS Upgrade](https://github.com/hijigoo/dev-agent-workflow/issues/21):
+  최신 stable 반영을 Cloud Agent에 맡기는 샘플
+- [#22 E2E 실패](https://github.com/hijigoo/dev-agent-workflow/issues/22):
+  Playwright 회귀 실패의 원인 분석·수정을 맡기는 샘플
+- [#23 CodeQL 경고](https://github.com/hijigoo/dev-agent-workflow/issues/23):
+  보안 경고의 root cause 수정을 맡기는 샘플
+- 세 Issue 모두 `agent-ready` 상태이며, 담당자가 확인한 뒤 Cloud Agent에 할당합니다.
+
+### PR 샘플
+
+- **열린 병합 금지 PR:** [#18 CodeQL Summary](https://github.com/hijigoo/dev-agent-workflow/pull/18),
+  [#20 품질 실패 감지](https://github.com/hijigoo/dev-agent-workflow/pull/20)
+- **병합된 기능 PR:** [#10 한국어 Mini Agent](https://github.com/hijigoo/dev-agent-workflow/pull/10),
+  [#12 웹 앱 한글화](https://github.com/hijigoo/dev-agent-workflow/pull/12),
+  [#14 테마 전환](https://github.com/hijigoo/dev-agent-workflow/pull/14),
+  [#16 UI 탭 제거](https://github.com/hijigoo/dev-agent-workflow/pull/16)
+- **닫힌 미병합 PR:** [#17 SQL Injection 탐지](https://github.com/hijigoo/dev-agent-workflow/pull/17),
+  [#19 CodeQL Summary 개선](https://github.com/hijigoo/dev-agent-workflow/pull/19)
+
+### 운영 원칙
+
+- Actions는 문제 발견 시 추적 가능한 Issue 또는 검증 결과까지만 생성합니다.
+- Cloud Agent 할당, PR 리뷰, 병합과 운영 배포는 사람이 최종 승인합니다.
+- 의도적 실패·취약점 시연 PR은 병합하지 않습니다.
+
 ## Actions 00~05 상세 흐름
 
 ### 00 → 01 → 02 연결 흐름
