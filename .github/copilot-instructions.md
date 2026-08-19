@@ -2,12 +2,14 @@
 
 This repository demonstrates controlled GitHub Copilot cloud agent workflows.
 
+<!-- Where the main code lives and what each part is responsible for -->
 ## Architecture
 
 - `apps/api`: FastAPI meeting-room API. SQLite access stays inside the repository class.
 - `apps/web`: React/TypeScript UI. API DTOs are mapped explicitly in `src/api.ts`.
 - `scripts`: deterministic OSS release, CodeQL SARIF, and Playwright reporting helpers.
 
+<!-- Rules every change must follow, regardless of task -->
 ## Required behavior
 
 - Keep cloud-agent automation ending at an Issue or pull request. Never add auto-merge.
@@ -18,6 +20,7 @@ This repository demonstrates controlled GitHub Copilot cloud agent workflows.
 - Reuse existing models and helpers rather than duplicating contracts.
 - Avoid unrelated refactoring and new runtime dependencies.
 
+<!-- Commands to run before considering a change complete -->
 ## Validation
 
 Run the smallest relevant commands and then the full affected suite:
@@ -33,6 +36,7 @@ npm run build
 
 For UI workflows also run `npm run test:e2e`.
 
+<!-- What every PR description must contain -->
 ## Pull request report
 
 Include:
