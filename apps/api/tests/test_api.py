@@ -8,6 +8,7 @@ from meeting_api.main import create_app
 
 @pytest.fixture
 def client(tmp_path):
+    # Use a fresh SQLite database for each test so reservation state stays isolated.
     app = create_app(str(tmp_path / "reservations.sqlite3"))
     with TestClient(app) as test_client:
         yield test_client
@@ -19,6 +20,7 @@ def reservation(
     room_id: str = "atlas",
     title: str = "Operations review",
 ):
+    # Centralize the default reservation payload while letting each test override edge cases.
     return {"room_id": room_id, "title": title, "start": start, "end": end}
 
 
@@ -135,6 +137,7 @@ def test_overlapping_reservation_conflicts(client):
 
 def test_adjacent_half_open_reservations_do_not_conflict(client):
     first = client.post("/reservations", json=reservation())
+    # A reservation starting exactly when the first one ends is valid for [start, end) intervals.
     adjacent = client.post(
         "/reservations",
         json=reservation(
@@ -189,6 +192,7 @@ def test_mini_agent_classifies_korean_room_search(client):
 
 def test_quality_metrics_include_only_aggregates(client):
     created = client.post("/reservations", json=reservation()).json()
+    # Trigger one conflict so metrics can prove they report aggregate counts, not sensitive titles.
     client.post(
         "/reservations",
         json=reservation(
