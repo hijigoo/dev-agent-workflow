@@ -26,6 +26,7 @@ def reservation(
 
 def test_health_and_cors(client):
     assert client.get("/health").json() == {"status": "ok"}
+    # Simulate the local frontend's preflight request, not a direct API request.
     response = client.options(
         "/rooms",
         headers={
@@ -40,6 +41,7 @@ def test_mini_agent_is_deterministic_and_reports_pipeline_versions(client):
     response = client.post("/agent/respond", json={"message": "How do I reserve a room?"})
 
     assert response.status_code == 200
+    # Match the full response so answer, stage order, and version metadata stay stable.
     assert response.json() == {
         "answer": (
             "Choose a room, provide a timezone-aware start and end time, "
@@ -72,6 +74,7 @@ def test_seeded_rooms_are_deterministic_and_filterable(client):
         "denali",
     ]
 
+    # Combine capacity with both equipment parameter names; all constraints must match.
     filtered = client.get(
         "/rooms",
         params=[
@@ -103,13 +106,14 @@ def test_create_normalizes_timezone_to_utc_and_lists(client):
     ],
 )
 def test_timezone_naive_values_are_rejected(client, start, end):
-    # Check each endpoint independently so either missing offset is rejected.
+    # Omit the offset from one timestamp at a time to cover both field validators.
     response = client.post("/reservations", json=reservation(start=start, end=end))
     assert response.status_code == 422
     assert "timezone-aware datetime required" in response.text
 
 
 def test_invalid_interval_and_unknown_room_are_rejected(client):
+    # Equal timestamps form an empty interval; a well-formed unknown room is a 404 instead.
     assert (
         client.post(
             "/reservations",
@@ -139,7 +143,7 @@ def test_overlapping_reservation_conflicts(client):
 
 def test_adjacent_half_open_reservations_do_not_conflict(client):
     first = client.post("/reservations", json=reservation())
-    # A reservation starting exactly when the first one ends is valid for [start, end) intervals.
+    # Half-open [start, end) intervals exclude the end, allowing neighbors on either side.
     adjacent = client.post(
         "/reservations",
         json=reservation(
@@ -164,6 +168,7 @@ def test_cancellation_releases_interval_and_can_be_filtered(client):
     cancelled = client.delete(f"/reservations/{created['id']}")
     assert cancelled.status_code == 200
     assert cancelled.json()["status"] == "cancelled"
+    # Cancelling again through the POST alias must remain idempotent.
     assert (
         client.post(f"/reservations/{created['id']}/cancel").json()["status"]
         == "cancelled"
@@ -173,11 +178,13 @@ def test_cancellation_releases_interval_and_can_be_filtered(client):
         "/reservations", json=reservation(title="Replacement")
     )
     assert replacement.status_code == 201
+    # The cancelled record remains queryable even after its interval is booked again.
     assert len(client.get("/reservations?status=cancelled").json()) == 1
     assert client.delete("/reservations/9999").status_code == 404
 
 
 def test_mini_agent_classifies_korean_room_search(client):
+    # Korean capacity and video-conferencing terms should route to room search.
     response = client.post(
         "/agent/respond",
         json={"message": "화상회의가 가능한 10명 회의실을 찾아줘"},
@@ -195,7 +202,7 @@ def test_mini_agent_classifies_korean_room_search(client):
 
 def test_quality_metrics_include_only_aggregates(client):
     created = client.post("/reservations", json=reservation()).json()
-    # Trigger one conflict so metrics can prove they report aggregate counts, not sensitive titles.
+    # Reject the overlapping request: it increments conflicts without creating a reservation.
     client.post(
         "/reservations",
         json=reservation(
@@ -207,6 +214,7 @@ def test_quality_metrics_include_only_aggregates(client):
     client.delete(f"/reservations/{created['id']}")
     metrics = client.get("/metrics/quality")
     assert metrics.status_code == 200
+    # The cancelled booking still contributes to totals and duration, but not active count.
     assert metrics.json() == {
         "total_reservations": 1,
         "active_reservations": 0,
@@ -215,5 +223,6 @@ def test_quality_metrics_include_only_aggregates(client):
         "cancellation_rate": 1.0,
         "average_duration_minutes": 60.0,
     }
+    # Metrics expose aggregates only, and both route names return the same payload.
     assert "Sensitive" not in metrics.text
     assert client.get("/quality-metrics").json() == metrics.json()
