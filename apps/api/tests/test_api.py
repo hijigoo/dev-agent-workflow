@@ -85,6 +85,7 @@ def test_seeded_rooms_are_deterministic_and_filterable(client):
 
 
 def test_create_normalizes_timezone_to_utc_and_lists(client):
+    # The +09:00 input should be stored and returned as the equivalent UTC instant.
     response = client.post("/reservations", json=reservation())
     assert response.status_code == 201
     created = response.json()
@@ -102,6 +103,7 @@ def test_create_normalizes_timezone_to_utc_and_lists(client):
     ],
 )
 def test_timezone_naive_values_are_rejected(client, start, end):
+    # Check each endpoint independently so either missing offset is rejected.
     response = client.post("/reservations", json=reservation(start=start, end=end))
     assert response.status_code == 422
     assert "timezone-aware datetime required" in response.text
@@ -166,6 +168,7 @@ def test_cancellation_releases_interval_and_can_be_filtered(client):
         client.post(f"/reservations/{created['id']}/cancel").json()["status"]
         == "cancelled"
     )
+    # Reusing the same interval verifies cancellation no longer blocks availability.
     replacement = client.post(
         "/reservations", json=reservation(title="Replacement")
     )
