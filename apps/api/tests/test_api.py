@@ -8,6 +8,7 @@ from meeting_api.main import create_app
 
 @pytest.fixture
 def client(tmp_path):
+    # Use a fresh SQLite database for each test so reservation state stays isolated.
     app = create_app(str(tmp_path / "reservations.sqlite3"))
     with TestClient(app) as test_client:
         yield test_client
@@ -19,6 +20,7 @@ def reservation(
     room_id: str = "atlas",
     title: str = "Operations review",
 ):
+    # Centralize the default reservation payload while letting each test override edge cases.
     return {"room_id": room_id, "title": title, "start": start, "end": end}
 
 
@@ -83,6 +85,7 @@ def test_seeded_rooms_are_deterministic_and_filterable(client):
 
 
 def test_create_normalizes_timezone_to_utc_and_lists(client):
+    # The +09:00 input should be stored and returned as the equivalent UTC instant.
     response = client.post("/reservations", json=reservation())
     assert response.status_code == 201
     created = response.json()
@@ -100,6 +103,7 @@ def test_create_normalizes_timezone_to_utc_and_lists(client):
     ],
 )
 def test_timezone_naive_values_are_rejected(client, start, end):
+    # Check each endpoint independently so either missing offset is rejected.
     response = client.post("/reservations", json=reservation(start=start, end=end))
     assert response.status_code == 422
     assert "timezone-aware datetime required" in response.text
@@ -135,6 +139,7 @@ def test_overlapping_reservation_conflicts(client):
 
 def test_adjacent_half_open_reservations_do_not_conflict(client):
     first = client.post("/reservations", json=reservation())
+    # A reservation starting exactly when the first one ends is valid for [start, end) intervals.
     adjacent = client.post(
         "/reservations",
         json=reservation(
@@ -163,6 +168,7 @@ def test_cancellation_releases_interval_and_can_be_filtered(client):
         client.post(f"/reservations/{created['id']}/cancel").json()["status"]
         == "cancelled"
     )
+    # Reusing the same interval verifies cancellation no longer blocks availability.
     replacement = client.post(
         "/reservations", json=reservation(title="Replacement")
     )
@@ -189,6 +195,7 @@ def test_mini_agent_classifies_korean_room_search(client):
 
 def test_quality_metrics_include_only_aggregates(client):
     created = client.post("/reservations", json=reservation()).json()
+    # Trigger one conflict so metrics can prove they report aggregate counts, not sensitive titles.
     client.post(
         "/reservations",
         json=reservation(
